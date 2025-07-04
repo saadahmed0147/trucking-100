@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:fuel_route/Component/round_button.dart';
@@ -23,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _loading = false;
   bool _googleSigninLoading = false;
-  final _firebaseAuth = FirebaseAuth.instance;
 
   FocusNode emailFocusNode = FocusNode();
   FocusNode passFocusNode = FocusNode();
@@ -222,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               titleColor: AppColors.lightBlueColor,
                               bgColor: AppColors.whiteColor,
                               leadingIcon: FontAwesomeIcons.squareFacebook,
-                              // loading: _loading,
+                              loading: _googleSigninLoading,
                               borderRadius: 30,
                               title: 'Sign in with Google',
                               fontSize: 18,

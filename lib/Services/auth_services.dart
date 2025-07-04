@@ -27,21 +27,35 @@ class AuthService {
         final credential = FacebookAuthProvider.credential(accessToken!.token);
 
         final res = await _auth.signInWithCredential(credential);
+        final user = res.user;
 
-        Utils.flushBarErrorMessage(
-          'Welcome, ${res.user?.displayName}',
-          context,
-          success: true,
-        );
+        if (user != null) {
+          // ✅ Save user data to Realtime Database
+          await _dbRef.child("users/${user.uid}").set({
+            'uid': user.uid,
+            'email': user.email ?? '',
+            'name': user.displayName ?? '',
+            'phone': user.phoneNumber ?? '',
+          });
 
-        Navigator.pushReplacementNamed(context, RouteNames.homeScreen);
-        return res;
+          Utils.flushBarErrorMessage(
+            'Welcome, ${user.displayName}',
+            context,
+            success: true,
+          );
+
+          Navigator.pushReplacementNamed(context, RouteNames.homeScreen);
+          return res;
+        } else {
+          Utils.flushBarErrorMessage("User data is null.", context);
+          return null;
+        }
       } else {
         Utils.flushBarErrorMessage('Facebook Sign-In canceled.', context);
         return null;
       }
     } catch (e) {
-      debugPrint('Facebook Sign-In error: $e');
+      debugPrint('🔥 Facebook Sign-In error: $e');
       Utils.flushBarErrorMessage('Facebook Sign-In failed.', context);
       return null;
     } finally {
@@ -61,10 +75,7 @@ class AuthService {
       final GoogleSignIn googleSignIn = GoogleSignIn();
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-      if (googleUser == null) {
-        // User canceled sign-in
-        return null;
-      }
+      if (googleUser == null) return null;
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
@@ -75,9 +86,21 @@ class AuthService {
       );
 
       final res = await _auth.signInWithCredential(credential);
+      final user = res.user;
+
+      // ✅ Save user to Realtime Database
+      if (user != null) {
+        await _dbRef.child("users/${user.uid}").set({
+          'uid': user.uid,
+          'email': user.email,
+          'name': user.displayName ?? '',
+          'photoUrl': user.photoURL ?? '',
+          'provider': 'google',
+        });
+      }
 
       Utils.flushBarErrorMessage(
-        'Welcome, ${res.user?.displayName}',
+        'Welcome, ${user?.displayName}',
         context,
         success: true,
       );

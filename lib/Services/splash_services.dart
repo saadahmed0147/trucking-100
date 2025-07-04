@@ -15,7 +15,7 @@ class SplashServices {
     // First time opening app ever
     if (isFirstLaunch) {
       await prefs.setBool('isFirstLaunch', false); // mark as not first
-      Navigator.pushReplacementNamed(context, RouteNames.splashScreen);
+      Navigator.pushReplacementNamed(context, RouteNames.welcomeScreen);
     }
     // Opened before but not logged in
     else if (user == null) {
@@ -23,7 +23,7 @@ class SplashServices {
     }
     // Already logged in
     else {
-      Navigator.pushReplacementNamed(context, RouteNames.paymentScreen);
+      Navigator.pushReplacementNamed(context, RouteNames.homeScreen);
     }
   }
 }

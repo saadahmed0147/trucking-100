@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "801099113858",
+    "project_id": "trucking-100-5223c",
+    "storage_bucket": "trucking-100-5223c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:801099113858:android:5ff27fa7ceb7ef73bbdb9b",
+        "android_client_info": {
+          "package_name": "com.example.fuel_route"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "801099113858-e185le0qe5ddpfnd3f09hm3hbhjhnpib.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.fuel_route",
+            "certificate_hash": "10df0ba6b8c7a548041ff95ac2222c45587d9c99"
+          }
+        },
+        {
+          "client_id": "801099113858-li096tuqub4uql1fca6d0q94642ad09v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAiI64eGvw7w5wD04JNe56SkcofINo0RpA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "801099113858-li096tuqub4uql1fca6d0q94642ad09v.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "801099113858-pnh35j34gcnnqn768no65g1f36j4du7q.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.fuelRoute"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

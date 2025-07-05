@@ -22,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _loading = false;
   bool _googleSigninLoading = false;
+  bool _facebookSigninLoading = false;
 
   FocusNode emailFocusNode = FocusNode();
   FocusNode passFocusNode = FocusNode();
@@ -52,9 +53,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     authService.signInWithFacebook(
       context: context,
-      onStart: () => setState(() => _googleSigninLoading = true),
+      onStart: () => setState(() => _facebookSigninLoading = true),
       onComplete: () {
-        if (mounted) setState(() => _googleSigninLoading = false);
+        if (mounted) setState(() => _facebookSigninLoading = false);
       },
     );
   }
@@ -219,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             RoundButton(
                               titleColor: AppColors.lightBlueColor,
                               bgColor: AppColors.whiteColor,
-                              leadingIcon: FontAwesomeIcons.squareFacebook,
+                              leadingIcon: FontAwesomeIcons.google,
                               loading: _googleSigninLoading,
                               borderRadius: 30,
                               title: 'Sign in with Google',
@@ -231,7 +232,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               bgColor: AppColors.whiteColor,
                               // loading: _loading,
                               borderRadius: 30,
-                              leadingIcon: FontAwesomeIcons.google,
+                              loading: _facebookSigninLoading,
+                              leadingIcon: FontAwesomeIcons.squareFacebook,
                               title: 'Sign in with Facebook',
                               fontSize: 18,
                               onPress: _signInWithFacebook,

@@ -63,7 +63,6 @@ class AuthService {
     }
   }
 
-  // Google Sign-In
   Future<UserCredential?> signInWithGoogle({
     required BuildContext context,
     required VoidCallback onStart,
@@ -73,9 +72,16 @@ class AuthService {
 
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn();
+
+      // Ensure previous account is signed out to trigger chooser
+      await googleSignIn.signOut();
+
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-      if (googleUser == null) return null;
+      if (googleUser == null) {
+        Utils.flushBarErrorMessage('Google Sign-In cancelled.', context);
+        return null;
+      }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
@@ -88,19 +94,22 @@ class AuthService {
       final res = await _auth.signInWithCredential(credential);
       final user = res.user;
 
-      // ✅ Save user to Realtime Database
-      if (user != null) {
-        await _dbRef.child("users/${user.uid}").set({
-          'uid': user.uid,
-          'email': user.email,
-          'name': user.displayName ?? '',
-          'photoUrl': user.photoURL ?? '',
-          'provider': 'google',
-        });
+      if (user == null) {
+        Utils.flushBarErrorMessage('User info is null.', context);
+        return null;
       }
 
+      // ✅ Save to Realtime Database
+      await _dbRef.child("users/${user.uid}").set({
+        'uid': user.uid,
+        'email': user.email ?? '',
+        'name': user.displayName ?? '',
+        'photoUrl': user.photoURL ?? '',
+        'provider': 'google',
+      });
+
       Utils.flushBarErrorMessage(
-        'Welcome, ${user?.displayName}',
+        'Welcome, ${user.displayName ?? 'User'}',
         context,
         success: true,
       );
@@ -108,8 +117,8 @@ class AuthService {
       Navigator.pushReplacementNamed(context, RouteNames.homeScreen);
       return res;
     } catch (e) {
-      debugPrint('Google Sign-In error: $e');
-      Utils.flushBarErrorMessage('Google Sign-In failed.', context);
+      debugPrint('🔥 Google Sign-In Error: $e');
+      Utils.flushBarErrorMessage('Google Sign-In failed: $e', context);
       return null;
     } finally {
       onComplete();

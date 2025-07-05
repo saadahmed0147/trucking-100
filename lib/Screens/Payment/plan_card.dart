@@ -1,67 +1,125 @@
 import 'package:flutter/material.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:fuel_route/Utils/app_colors.dart';
 
-class PlanCard extends StatelessWidget {
-  final ProductDetails product;
-  final Function(ProductDetails) onBuy;
+class PlanCardBox extends StatelessWidget {
+  final String title;
+  final String price;
+  final String subtitle;
+  final String priceSuffix;
+  final String? badgeText;
+  final bool isHighlighted;
+  final bool isSelected;
+  final VoidCallback onTap;
 
-  const PlanCard({required this.product, required this.onBuy, super.key});
+  const PlanCardBox({
+    super.key,
+    required this.title,
+    required this.price,
+    required this.subtitle,
+    required this.priceSuffix,
+    this.badgeText,
+    this.isHighlighted = false,
+    this.isSelected = false,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isLimitedOffer = product.id == 'semi_annual_plan';
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(12),
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.lightBlue.shade50 : Colors.white,
+          border: Border.all(
+            color: isSelected ? AppColors.lightBlueColor : Colors.grey.shade300,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
           children: [
-            if (isLimitedOffer)
+            if (badgeText != null)
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.blueAccent,
-                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(width: 2, color: AppColors.lightBlueColor),
+                  borderRadius: BorderRadius.circular(30),
                 ),
-                child: const Text(
-                  'Limited Offer',
-                  style: TextStyle(color: Colors.white, fontSize: 12),
+                child: Text(
+                  badgeText!,
+                  style: const TextStyle(
+                    color: AppColors.darkBlueColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            if (isLimitedOffer) const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.title,
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.darkBlueColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text.rich(
+                  TextSpan(
+                    text: price,
                     style: const TextStyle(
+                      color: AppColors.darkBlueColor,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
                     ),
+                    children: [
+                      TextSpan(
+                        text: priceSuffix,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.normal,
+                          color: AppColors.darkBlueColor,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 5),
-                  Text(product.price, style: const TextStyle(fontSize: 14)),
-                  const SizedBox(height: 5),
-                  Text(
-                    product.description,
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
-                  ),
-                ],
-              ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () => onBuy(product),
-              child: const Text(
-                "Choose",
-                style: TextStyle(color: Colors.blueAccent),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppColors.darkBlueColor,
+                fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              softWrap: true,
             ),
           ],
         ),

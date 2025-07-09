@@ -35,24 +35,31 @@ class _AddNewTripState extends State<AddNewTrip> {
   final String apiKey = 'AIzaSyDo8HGqkDwHuSuxcWAkHuK7H_gv1ThasBg';
 
   Set<String> selectedCategories = {};
-
   final List<Map<String, dynamic>> categories = [
-    {'label': '🛢️ Fuel', 'types': 'gas_station'},
-    {'label': '🛒 Convenience', 'types': 'convenience_store|store|supermarket'},
-    {'label': '🛑 Truck Stops', 'keyword': 'truck stop'},
-    {'label': '🍔 Food', 'types': 'restaurant|food|cafe'},
-    {'label': '🅿️ Parking', 'types': 'parking'},
-    {'label': '🧽 Truck Wash', 'types': 'car_wash'},
-    {'label': '🏪 Walmart', 'keyword': 'Walmart'},
-    {'label': '🏋️ Gym', 'types': 'gym'},
-    {'label': '💵 ATM/Bank', 'types': 'atm|bank|finance'},
-    {'label': '⚖️ Weigh Station', 'keyword': 'weigh station'},
-    {'label': '🔧 Mechanics', 'types': 'car_repair'},
-    {'label': '🏥 Medical', 'types': 'hospital|doctor|pharmacy'},
-    {'label': '🏨 Rest/Hotels', 'types': 'lodging'},
-    {'label': '🔋 EV Charging', 'types': 'electric_vehicle_charging_station'},
-    {'label': '📦 Warehouses', 'types': 'storage|moving_company'},
-    {'label': '🛃 Border/Toll', 'keyword': 'toll'},
+    {'label': 'Fuel', 'icon': '🛢️', 'types': 'gas_station'},
+    {
+      'label': 'Convenience',
+      'icon': '🛒',
+      'types': 'convenience_store|store|supermarket',
+    },
+    {'label': 'Truck Stops', 'icon': '🛑', 'keyword': 'truck stop'},
+    {'label': 'Food', 'icon': '🍔', 'types': 'restaurant|food|cafe'},
+    {'label': 'Parking', 'icon': '🅿️', 'types': 'parking'},
+    {'label': 'Truck Wash', 'icon': '🧽', 'types': 'car_wash'},
+    {'label': 'Walmart', 'icon': '🏪', 'keyword': 'Walmart'},
+    {'label': 'Gym', 'icon': '🏋️', 'types': 'gym'},
+    {'label': 'ATM/Bank', 'icon': '💵', 'types': 'atm|bank|finance'},
+    {'label': 'Weigh Station', 'icon': '⚖️', 'keyword': 'weigh station'},
+    {'label': 'Mechanics', 'icon': '🔧', 'types': 'car_repair'},
+    {'label': 'Medical', 'icon': '🏥', 'types': 'hospital|doctor|pharmacy'},
+    {'label': 'Rest/Hotels', 'icon': '🏨', 'types': 'lodging'},
+    {
+      'label': 'EV Charging',
+      'icon': '🔋',
+      'types': 'electric_vehicle_charging_station',
+    },
+    {'label': 'Warehouses', 'icon': '📦', 'types': 'storage|moving_company'},
+    {'label': 'Border/Toll', 'icon': '🛃', 'keyword': 'toll'},
   ];
 
   @override
@@ -437,10 +444,7 @@ class _AddNewTripState extends State<AddNewTrip> {
 
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 10,
-                          ),
+
                           decoration: BoxDecoration(
                             gradient: isSelected
                                 ? const LinearGradient(
@@ -461,14 +465,33 @@ class _AddNewTripState extends State<AddNewTrip> {
                                 : [],
                           ),
                           child: Center(
-                            child: Text(
-                              cat['label'],
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                                color: isSelected ? Colors.white : Colors.blue,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  cat['icon'],
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 35,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.blue,
+                                  ),
+                                ),
+                                Text(
+                                  cat['label'],
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.blue,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -498,7 +521,7 @@ class _AddNewTripState extends State<AddNewTrip> {
                 fontSize: 18,
               ),
             ),
-            child: const Text('Select Route'),
+            child: const Text('Next'),
             onPressed: () async {
               if (origin != null && destination != null) {
                 final user = FirebaseAuth.instance.currentUser;
@@ -508,35 +531,66 @@ class _AddNewTripState extends State<AddNewTrip> {
                   );
                   return;
                 }
-                // Save trip to Firebase Realtime Database under user UID
-                final tripData = {
-                  'pickup': {
-                    'lat': origin!.latitude,
-                    'lng': origin!.longitude,
-                    'name': _pickupController.text,
-                  },
-                  'destination': {
-                    'lat': destination!.latitude,
-                    'lng': destination!.longitude,
-                    'name': _destinationController.text,
-                  },
-                  'timestamp': DateTime.now().toIso8601String(),
-                  'user': {
-                    'uid': user.uid,
-                    'email': user.email,
-                    'displayName': user.displayName,
-                  },
-                };
-                final dbRef = FirebaseDatabase.instance
-                    .ref()
-                    .child('selected_routes')
-                    .child(user.uid);
-                await dbRef.push().set(tripData);
-                // Navigate to calculator screen
+
+                // ❌ REMOVE OR COMMENT THIS BLOCK TO SKIP FIREBASE SAVE
+                // final tripData = {
+                //   'pickup': {
+                //     'lat': origin!.latitude,
+                //     'lng': origin!.longitude,
+                //     'name': _pickupController.text,
+                //   },
+                //   'destination': {
+                //     'lat': destination!.latitude,
+                //     'lng': destination!.longitude,
+                //     'name': _destinationController.text,
+                //   },
+                //   'timestamp': DateTime.now().toIso8601String(),
+                //   'user': {
+                //     'uid': user.uid,
+                //     'email': user.email,
+                //     'displayName': user.displayName,
+                //   },
+                // };
+                // final dbRef = FirebaseDatabase.instance
+                //     .ref()
+                //     .child('selected_routes')
+                //     .child(user.uid);
+                // await dbRef.push().set(tripData);
+
+                // ✅ Proceed to next screen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const CalculatorScreen(),
+                    builder: (context) {
+                      print('''
+🚛 Trip Details:
+-------------------------
+📍 Pickup Location: ${_pickupController.text}
+📍 Destination: ${_destinationController.text}
+
+👤 User Name: ${user.displayName ?? 'N/A'}
+📧 User Email: ${user.email ?? 'N/A'}
+
+🌍 Pickup Coordinates:
+   - Latitude: ${origin!.latitude}
+   - Longitude: ${origin!.longitude}
+
+🌍 Destination Coordinates:
+   - Latitude: ${destination!.latitude}
+   - Longitude: ${destination!.longitude}
+-------------------------
+''');
+                      return CalculatorScreen(
+                        pickup: _pickupController.text,
+                        destination: _destinationController.text,
+                        userName: user.displayName ?? 'N/A',
+                        userEmail: user.email ?? 'N/A',
+                        pickupLat: origin!.latitude,
+                        pickupLng: origin!.longitude,
+                        destinationLat: destination!.latitude,
+                        destinationLng: destination!.longitude,
+                      );
+                    },
                   ),
                 );
               } else {

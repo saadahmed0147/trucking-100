@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Dashboard/dashboard_card.dart';
 import 'package:fuel_route/Screens/Home/Dashboard/recent_trip_list.dart';
+import 'package:fuel_route/Screens/Home/Trip/add_new_trip.dart';
+import 'package:fuel_route/Services/trip_service.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -13,26 +15,12 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   late Future<List<Map<String, String>>> _tripsFuture;
-  Future<List<Map<String, String>>>?
-  _cachedTripsFuture; // ✅ Cache variable here
+  Future<List<Map<String, String>>>? _cachedTripsFuture;
 
   @override
   void initState() {
     super.initState();
-    _tripsFuture = _cachedTripsFuture ??= fetchTrips(); // ✅ cache once
-  }
-
-  Future<List<Map<String, String>>> fetchTrips() async {
-    // This is placeholder logic. Replace with Firestore call later.
-    await Future.delayed(const Duration(seconds: 2)); // simulate loading
-
-    // Example dummy data (replace with Firestore snapshot parsing)
-    return [
-      {"destination": "Denver, CO", "current": "Chicago", "status": "Active"},
-      {"destination": "Chicago", "current": "Denver", "status": "Complete"},
-      {"destination": "Chicago", "current": "Denver", "status": "Complete"},
-      {"destination": "Chicago", "current": "Denver", "status": "Complete"},
-    ];
+    _tripsFuture = _cachedTripsFuture ??= TripService.fetchTripsFromFirebase();
   }
 
   @override
@@ -49,29 +37,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-
-        // 👇 Leading image (left side)
         leading: Padding(
           padding: const EdgeInsets.only(left: 12),
           child: Image.asset('assets/images/logo.png'),
         ),
-
-        actions: [
-          // 👇 Trailing icon with right padding
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.menu,
-                color: AppColors.whiteColor,
-                size: 30,
-              ),
-            ),
-          ),
-        ],
+        // actions: [
+        //   Padding(
+        //     padding: const EdgeInsets.only(right: 12),
+        //     child: IconButton(
+        //       onPressed: () {},
+        //       icon: const Icon(
+        //         Icons.menu,
+        //         color: AppColors.whiteColor,
+        //         size: 30,
+        //       ),
+        //     ),
+        //   ),
+        // ],
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
         child: Column(
@@ -104,7 +87,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 title: "New Trip",
                 fontSize: 17,
                 borderRadius: 30,
-                onPress: () {},
+                onPress: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddNewTrip()),
+                  );
+                },
               ),
             ),
             GridView(
@@ -117,7 +105,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.6,
               ),
-              children: [
+              children: const [
                 DashboardCard(
                   title: 'EST. Fuel',
                   number: '\$24,580',
@@ -158,29 +146,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(height: 10),
-
-            /// 👇 FutureBuilder with shrinkWrap
             FutureBuilder<List<Map<String, String>>>(
               future: _tripsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: const Center(
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
                       child: CircularProgressIndicator(
                         color: AppColors.darkBlueColor,
                       ),
                     ),
                   );
                 } else if (snapshot.hasError) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: const Center(child: Text("Failed to load trips")),
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: Text("Failed to load trips")),
                   );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: const Center(child: Text("No trips found")),
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: Text("No trips found")),
                   );
                 }
 

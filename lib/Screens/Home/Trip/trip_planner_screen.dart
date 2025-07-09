@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/add_new_trip.dart';
+import 'package:fuel_route/Screens/Home/Trip/calculator_screen.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/main.dart';
 
@@ -12,18 +15,27 @@ class TripPlannerScreen extends StatefulWidget {
 }
 
 class _TripPlannerScreenState extends State<TripPlannerScreen> {
-  late Future<List<String>> _tripFuture;
+  late Future<List<Map<String, dynamic>>> _tripFuture;
 
   @override
   void initState() {
     super.initState();
-    _tripFuture = fetchTrips(); // Replace with your Firestore call
+    _tripFuture = fetchTrips();
   }
 
-  Future<List<String>> fetchTrips() async {
-    await Future.delayed(const Duration(seconds: 2));
-    // Simulate no data from Firebase:
-    return []; // ← 👈 Replace with your Firebase fetching logic
+  Future<List<Map<String, dynamic>>> fetchTrips() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return [];
+    final dbRef = FirebaseDatabase.instance.ref('trips/${user.uid}');
+    final snapshot = await dbRef.get();
+    if (!snapshot.exists) return [];
+    final tripsMap = snapshot.value as Map<dynamic, dynamic>?;
+    if (tripsMap == null) return [];
+    return tripsMap.entries.map((e) {
+      final data = Map<String, dynamic>.from(e.value as Map);
+      data['id'] = e.key;
+      return data;
+    }).toList();
   }
 
   @override
@@ -32,7 +44,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       backgroundColor: AppColors.tabsBgColor,
 
       /// 👇 Main body
-      body: FutureBuilder<List<String>>(
+      body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _tripFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -106,20 +118,88 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
               ),
             );
           } else {
-            // 👇 Replace with your trip list view when trips exist
+            // Show trip list with details and navigation
             return ListView.builder(
               padding: const EdgeInsets.all(20),
               itemCount: trips.length,
-              itemBuilder: (context, index) => ListTile(
-                leading: const Icon(Icons.trip_origin),
-                title: Text("Trip to ${trips[index]}"),
-              ),
+              itemBuilder: (context, index) {
+                final trip = trips[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.route,
+                      color: AppColors.lightBlueColor,
+                    ),
+                    title: Text(
+                      '${trip['pickup'] ?? 'Unknown'} → ${trip['destination'] ?? 'Unknown'}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (trip['date'] != null) Text('Date: ${trip['date']}'),
+                        if (trip['category'] != null)
+                          Text('Category: ${trip['category']}'),
+                        if (trip['mpg'] != null) Text('MPG: ${trip['mpg']}'),
+                      ],
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(
+                        Icons.calculate,
+                        color: AppColors.lightBlueColor,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CalculatorScreen(
+                              pickup: trip['pickup'] ?? '',
+                              destination: trip['destination'] ?? '',
+                              userName: trip['userName'] ?? '',
+                              userEmail: trip['userEmail'] ?? '',
+                              pickupLat: (trip['pickupLat'] is double)
+                                  ? trip['pickupLat']
+                                  : double.tryParse(
+                                          (trip['pickupLat'] ?? '0.0')
+                                              .toString(),
+                                        ) ??
+                                        0.0,
+                              pickupLng: (trip['pickupLng'] is double)
+                                  ? trip['pickupLng']
+                                  : double.tryParse(
+                                          (trip['pickupLng'] ?? '0.0')
+                                              .toString(),
+                                        ) ??
+                                        0.0,
+                              destinationLat: (trip['destinationLat'] is double)
+                                  ? trip['destinationLat']
+                                  : double.tryParse(
+                                          (trip['destinationLat'] ?? '0.0')
+                                              .toString(),
+                                        ) ??
+                                        0.0,
+                              destinationLng: (trip['destinationLng'] is double)
+                                  ? trip['destinationLng']
+                                  : double.tryParse(
+                                          (trip['destinationLng'] ?? '0.0')
+                                              .toString(),
+                                        ) ??
+                                        0.0,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
             );
           }
         },
       ),
 
-      /// 👇 Fixed bottom button
+      /// 👇 Floating action button
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(30),
         child: RoundButton(
@@ -131,7 +211,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
           onPress: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AddNewTrip()),
+              MaterialPageRoute(builder: (context) => const AddNewTrip()),
             );
           },
         ),

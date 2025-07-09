@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fuel_route/Screens/Home/Dashboard/recent_trip_list.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 
@@ -11,26 +13,39 @@ class HistoryDashboardScreen extends StatefulWidget {
 
 class _HistoryDashboardScreenState extends State<HistoryDashboardScreen> {
   late Future<List<Map<String, String>>> _tripsFuture;
-  Future<List<Map<String, String>>>?
-  _cachedTripsFuture; // ✅ Cache variable here
+  Future<List<Map<String, String>>>? _cachedTripsFuture;
 
   @override
   void initState() {
     super.initState();
-    _tripsFuture = _cachedTripsFuture ??= fetchTrips(); // ✅ cache once
+    _tripsFuture = _cachedTripsFuture ??= fetchTripsFromFirebase();
   }
 
-  Future<List<Map<String, String>>> fetchTrips() async {
-    // This is placeholder logic. Replace with Firestore call later.
-    await Future.delayed(const Duration(seconds: 2)); // simulate loading
+  Future<List<Map<String, String>>> fetchTripsFromFirebase() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return [];
 
-    // Example dummy data (replace with Firestore snapshot parsing)
-    return [
-      {"destination": "Denver, CO", "current": "Chicago", "status": "Active"},
-      {"destination": "Chicago", "current": "Denver", "status": "Complete"},
-      {"destination": "Chicago", "current": "Denver", "status": "Complete"},
-      {"destination": "Chicago", "current": "Denver", "status": "Complete"},
-    ];
+    final userEmail = user.email;
+    final ref = FirebaseDatabase.instance.ref('trips');
+    final snapshot = await ref.get();
+
+    final List<Map<String, String>> trips = [];
+
+    if (snapshot.exists) {
+      final data = snapshot.value as Map<dynamic, dynamic>;
+      data.forEach((key, value) {
+        final trip = Map<String, dynamic>.from(value);
+        if (trip['userEmail'] == userEmail) {
+          trips.add({
+            'destination': trip['destination'] ?? '',
+            'current': trip['pickup'] ?? '',
+            'status': (trip['status'] ?? 'completed').toString().toUpperCase(),
+          });
+        }
+      });
+    }
+
+    return trips.reversed.toList(); // show latest first
   }
 
   @override
@@ -40,7 +55,6 @@ class _HistoryDashboardScreenState extends State<HistoryDashboardScreen> {
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -51,35 +65,33 @@ class _HistoryDashboardScreenState extends State<HistoryDashboardScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: FutureBuilder<List<Map<String, String>>>(
-                future: _tripsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.darkBlueColor,
-                        ),
+            const SizedBox(height: 20),
+            FutureBuilder<List<Map<String, String>>>(
+              future: _tripsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.darkBlueColor,
                       ),
-                    );
-                  } else if (snapshot.hasError) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: const Center(child: Text("Failed to load trips")),
-                    );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: const Center(child: Text("No trips found")),
-                    );
-                  }
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: Text("Failed to load trips")),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: Text("No trips found")),
+                  );
+                }
 
-                  return RecentTripList(trips: snapshot.data!);
-                },
-              ),
+                return RecentTripList(trips: snapshot.data!);
+              },
             ),
           ],
         ),

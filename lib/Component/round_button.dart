@@ -7,6 +7,7 @@ class RoundButton extends StatefulWidget {
   final VoidCallback onPress;
   final Color? bgColor;
   final Color? titleColor;
+  final Color? leadingIconColor;
   final Color foregroundColor;
   final FocusNode? focusNode;
   final String? fontFamily;
@@ -29,6 +30,7 @@ class RoundButton extends StatefulWidget {
     this.fontSize,
     this.padding = const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
     this.leadingIcon,
+    this.leadingIconColor,
   });
 
   @override
@@ -68,7 +70,8 @@ class _RoundButtonState extends State<RoundButton> {
                       Icon(
                         widget.leadingIcon,
                         size: 26,
-                        color: AppColors.lightBlueColor,
+                        color:
+                            widget.leadingIconColor ?? AppColors.lightBlueColor,
                       ),
                       const SizedBox(width: 8),
                     ],

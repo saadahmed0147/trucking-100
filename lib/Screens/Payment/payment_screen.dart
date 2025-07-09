@@ -29,167 +29,176 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.splashBgColor,
-      body: ValueListenableBuilder<bool>(
-        valueListenable: controller.loading,
-        builder: (_, loading, __) {
-          if (loading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: SafeArea(
+        child: ValueListenableBuilder<bool>(
+          valueListenable: controller.loading,
+          builder: (_, loading, __) {
+            if (loading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          return Stack(
-            children: [
-              // 🔒 Fixed Top Header
-              Padding(
-                padding: const EdgeInsets.only(top: 50, left: 50, right: 50),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                return Column(
                   children: [
-                    SizedBox(height: 100),
-                    const Text(
-                      'TOP CHOICE OF',
-                      style: TextStyle(
-                        fontSize: 32,
-                        color: AppColors.whiteColor,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: "Eurostile",
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(30),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight * 0.6,
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 20),
+                                const Text(
+                                  'TOP CHOICE OF',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    color: AppColors.whiteColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: "Eurostile",
+                                  ),
+                                ),
+                                const Text(
+                                  '1,000,000+',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    color: AppColors.lightBlueColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: "Eurostile",
+                                  ),
+                                ),
+                                const Text(
+                                  'TRUCK DRIVERS',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    color: AppColors.whiteColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: "Eurostile",
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xff444446),
+                                    border: Border.all(
+                                      color: AppColors.greyColor,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: const [
+                                            Text(
+                                              "Routed Miles for Truckers",
+                                              textAlign: TextAlign.center,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontFamily: "Eurostile",
+                                                color: AppColors.whiteColor,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  "5.49B",
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    color: AppColors.whiteColor,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  "Miles",
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: AppColors.whiteColor,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        width: 1,
+                                        height: 50,
+                                        color: AppColors.greyColor,
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: const [
+                                            Text(
+                                              "5-Star Navigation Rating",
+                                              textAlign: TextAlign.center,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontFamily: "Eurostile",
+                                                color: AppColors.whiteColor,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(height: 4),
+                                            Text(
+                                              "96.43%",
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                color: AppColors.whiteColor,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 30),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const Text(
-                      '1,000,000+',
-                      style: TextStyle(
-                        fontSize: 32,
-                        color: AppColors.lightBlueColor,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: "Eurostile",
-                      ),
-                    ),
-                    const Text(
-                      'TRUCK DRIVERS',
-                      style: TextStyle(
-                        fontSize: 32,
-                        color: AppColors.whiteColor,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: "Eurostile",
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+
+                    // Sticky White Container
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xff444446),
-                        border: Border.all(
-                          color: AppColors.greyColor,
-                          width: 2,
+                      padding: const EdgeInsets.all(20),
+                      decoration: const BoxDecoration(
+                        color: AppColors.whiteColor,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(30),
                         ),
-                        borderRadius: BorderRadius.circular(30),
                       ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text(
-                                  "Routed Miles for Truckers",
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontFamily: "Eurostile",
-                                    color: AppColors.whiteColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Text(
-                                      "5.49B",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        color: AppColors.whiteColor,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      "Miles",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: AppColors.whiteColor,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            width: 1,
-                            height: 50,
-                            color: AppColors.greyColor,
-                            margin: const EdgeInsets.symmetric(horizontal: 12),
-                          ),
-                          Expanded(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Text(
-                                  "5-Star Navigation Rating",
-                                  textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontFamily: "Eurostile",
-                                    color: AppColors.whiteColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  "96.43%",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    color: AppColors.whiteColor,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // 🧭 Scrollable Bottom Sheet
-              DraggableScrollableSheet(
-                initialChildSize: 0.4,
-                minChildSize: 0.4,
-                maxChildSize: 0.7,
-                builder: (context, scrollController) {
-                  return Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: const BoxDecoration(
-                      color: AppColors.whiteColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      ),
-                    ),
-                    child: SingleChildScrollView(
-                      controller: scrollController,
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           const Text(
                             'Premium Plans',
@@ -251,7 +260,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 20),
                           const Text(
                             "Start with 7 days free trial, then \$29.99 per month",
                             style: TextStyle(
@@ -308,43 +317,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Features',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.blackColor,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            height: 5,
-                            width: 60,
-                            decoration: BoxDecoration(
-                              color: AppColors.lightBlueColor,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          const Text(
-                            "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English...",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 40),
                         ],
                       ),
                     ),
-                  );
-                },
-              ),
-            ],
-          );
-        },
+                  ],
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

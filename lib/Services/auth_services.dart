@@ -238,7 +238,9 @@ class AuthService {
     } catch (e) {
       Utils.flushBarErrorMessage(e.toString(), context);
     } finally {
-      onComplete();
+      onComplete(
+        
+      );
     }
   }
 }

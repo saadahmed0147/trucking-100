@@ -43,7 +43,21 @@ class _LoginScreenState extends State<LoginScreen> {
         password: passwordController.text.trim(),
         context: context,
         onStart: () => setState(() => _loading = true),
-        onComplete: () => setState(() => _loading = false),
+        onComplete: () async {
+          setState(() => _loading = false);
+          // final hasLocation = await isLocationSaved();
+
+          // if (!mounted) return;
+
+          // if (hasLocation) {
+          Navigator.pushReplacementNamed(context, RouteNames.homeScreen);
+          // } else {
+          //   Navigator.pushReplacementNamed(
+          //     context,
+          //     RouteNames.askLocationScreen,
+          //   );
+          // }
+        },
       );
     }
   }
@@ -227,17 +241,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontSize: 18,
                               onPress: _signInWithGoogle,
                             ),
-                            RoundButton(
-                              titleColor: AppColors.lightBlueColor,
-                              bgColor: AppColors.whiteColor,
-                              // loading: _loading,
-                              borderRadius: 30,
-                              loading: _facebookSigninLoading,
-                              leadingIcon: FontAwesomeIcons.squareFacebook,
-                              title: 'Sign in with Facebook',
-                              fontSize: 18,
-                              onPress: _signInWithFacebook,
-                            ),
+                            // RoundButton(
+                            //   titleColor: AppColors.lightBlueColor,
+                            //   bgColor: AppColors.whiteColor,
+                            //   // loading: _loading,
+                            //   borderRadius: 30,
+                            //   loading: _facebookSigninLoading,
+                            //   leadingIcon: FontAwesomeIcons.squareFacebook,
+                            //   title: 'Sign in with Facebook',
+                            //   fontSize: 18,
+                            //   onPress: _signInWithFacebook,
+                            // ),
                           ],
                         ),
                       ),

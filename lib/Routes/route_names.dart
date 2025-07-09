@@ -17,4 +17,13 @@ class RouteNames {
 
   //home
   static const String homeScreen = 'home_screen';
+  static const String askLocationScreen = 'askLocation_screen';
+  static const String mapScreen = 'map_screen';
+
+  //dashboard
+  static const String dashboardScreen = 'dashboard_screen';
+
+  //trip
+  static const String tripPlannerScreen = 'tripPlanner_screen';
+  static const String historyDashboardScreen = 'historyDashboard_screen';
 }

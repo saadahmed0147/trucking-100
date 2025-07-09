@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:fuel_route/Screens/Home/Trip/calculator_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddNewTrip extends StatefulWidget {
   const AddNewTrip({super.key});
@@ -477,6 +480,75 @@ class _AddNewTripState extends State<AddNewTrip> {
             },
           ),
         ],
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        child: SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            child: const Text('Select Route'),
+            onPressed: () async {
+              if (origin != null && destination != null) {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('User not logged in!')),
+                  );
+                  return;
+                }
+                // Save trip to Firebase Realtime Database under user UID
+                final tripData = {
+                  'pickup': {
+                    'lat': origin!.latitude,
+                    'lng': origin!.longitude,
+                    'name': _pickupController.text,
+                  },
+                  'destination': {
+                    'lat': destination!.latitude,
+                    'lng': destination!.longitude,
+                    'name': _destinationController.text,
+                  },
+                  'timestamp': DateTime.now().toIso8601String(),
+                  'user': {
+                    'uid': user.uid,
+                    'email': user.email,
+                    'displayName': user.displayName,
+                  },
+                };
+                final dbRef = FirebaseDatabase.instance
+                    .ref()
+                    .child('selected_routes')
+                    .child(user.uid);
+                await dbRef.push().set(tripData);
+                // Navigate to calculator screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CalculatorScreen(),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please select both pickup and destination.'),
+                  ),
+                );
+              }
+            },
+          ),
+        ),
       ),
     );
   }

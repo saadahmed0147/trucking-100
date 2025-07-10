@@ -141,81 +141,149 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
               ),
             );
           } else {
-            return ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: trips.length,
-              itemBuilder: (context, index) {
-                final trip = trips[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.route,
-                      color: AppColors.lightBlueColor,
+            return Padding(
+              padding: const EdgeInsets.all(30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+
+                children: [
+                  Text(
+                    "Current Trip",
+                    style: TextStyle(
+                      fontSize: 25,
+                      color: AppColors.blackColor,
+                      fontWeight: FontWeight.bold,
                     ),
-                    title: Text(
-                      '${trip['pickup'] ?? 'Unknown'} → ${trip['destination'] ?? 'Unknown'}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (trip['date'] != null) Text('Date: ${trip['date']}'),
-                        if (trip['category'] != null)
-                          Text('Category: ${trip['category']}'),
-                        if (trip['mpg'] != null) Text('MPG: ${trip['mpg']}'),
-                      ],
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(
-                        Icons.calculate,
-                        color: AppColors.lightBlueColor,
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CalculatorScreen(
-                              pickup: trip['pickup'] ?? '',
-                              destination: trip['destination'] ?? '',
-                              userName: trip['userName'] ?? '',
-                              userEmail: trip['userEmail'] ?? '',
-                              pickupLat: (trip['pickupLat'] is double)
-                                  ? trip['pickupLat']
-                                  : double.tryParse(
-                                          (trip['pickupLat'] ?? '0.0')
-                                              .toString(),
-                                        ) ??
-                                        0.0,
-                              pickupLng: (trip['pickupLng'] is double)
-                                  ? trip['pickupLng']
-                                  : double.tryParse(
-                                          (trip['pickupLng'] ?? '0.0')
-                                              .toString(),
-                                        ) ??
-                                        0.0,
-                              destinationLat: (trip['destinationLat'] is double)
-                                  ? trip['destinationLat']
-                                  : double.tryParse(
-                                          (trip['destinationLat'] ?? '0.0')
-                                              .toString(),
-                                        ) ??
-                                        0.0,
-                              destinationLng: (trip['destinationLng'] is double)
-                                  ? trip['destinationLng']
-                                  : double.tryParse(
-                                          (trip['destinationLng'] ?? '0.0')
-                                              .toString(),
-                                        ) ??
-                                        0.0,
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: trips.length,
+                      itemBuilder: (context, index) {
+                        final trip = trips[index];
+                        return Card(
+                          elevation: 5,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 4,
+                          ),
+                          child: InkWell(
+                            radius: 70,
+                            onTap: () {
+                           
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(18),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.location_on,
+                                        color: Colors.blueAccent,
+                                        size: 28,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          trip['pickup'] ?? 'Unknown',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                            color: AppColors.blackColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.flag,
+                                        color: Colors.deepOrange,
+                                        size: 28,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          trip['destination'] ?? 'Unknown',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                            color: AppColors.blackColor,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Divider(color: Colors.grey[300]),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 16,
+                                    runSpacing: 8,
+                                    children: [
+                                      if (trip['date'] != null)
+                                        Chip(
+                                          avatar: const Icon(
+                                            Icons.calendar_today,
+                                            size: 18,
+                                            color: Colors.white,
+                                          ),
+                                          label: Text(
+                                            'Date: ${trip['date'].toString().substring(0, 10)}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          backgroundColor: Colors.blueAccent,
+                                        ),
+                                      if (trip['category'] != null)
+                                        Chip(
+                                          avatar: const Icon(
+                                            Icons.category,
+                                            size: 18,
+                                            color: Colors.white,
+                                          ),
+                                          label: Text(
+                                            'Category: ${trip['category']}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          backgroundColor: Colors.deepPurple,
+                                        ),
+                                      if (trip['mpg'] != null)
+                                        Chip(
+                                          avatar: const Icon(
+                                            Icons.local_gas_station,
+                                            size: 18,
+                                            color: Colors.white,
+                                          ),
+                                          label: Text(
+                                            'MPG: ${trip['mpg']}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
                       },
                     ),
                   ),
-                );
-              },
+                ],
+              ),
             );
           }
         },

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Dashboard/dashboard_card.dart';
 import 'package:fuel_route/Screens/Home/Dashboard/recent_trip_list.dart';
@@ -23,6 +25,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _tripsFuture = _cachedTripsFuture ??= TripService.fetchTripsFromFirebase();
   }
 
+  /// 🔍 Check if the user already has an active trip
+  Future<bool> hasActiveTrip() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    final dbRef = FirebaseDatabase.instance.ref('trips');
+    final snapshot = await dbRef.get();
+    if (!snapshot.exists) return false;
+
+    final tripsMap = snapshot.value as Map<dynamic, dynamic>?;
+    if (tripsMap == null) return false;
+
+    for (final entry in tripsMap.entries) {
+      final data = Map<String, dynamic>.from(entry.value);
+      if (data['userEmail'] == user.email && data['status'] == 'active') {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,19 +65,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           padding: const EdgeInsets.only(left: 12),
           child: Image.asset('assets/images/logo.png'),
         ),
-        // actions: [
-        //   Padding(
-        //     padding: const EdgeInsets.only(right: 12),
-        //     child: IconButton(
-        //       onPressed: () {},
-        //       icon: const Icon(
-        //         Icons.menu,
-        //         color: AppColors.whiteColor,
-        //         size: 30,
-        //       ),
-        //     ),
-        //   ),
-        // ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
@@ -87,11 +98,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 title: "New Trip",
                 fontSize: 17,
                 borderRadius: 30,
-                onPress: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AddNewTrip()),
-                  );
+                onPress: () async {
+                  final activeTrip = await hasActiveTrip();
+
+                  if (activeTrip) {
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text("Active Trip Exists"),
+                        content: const Text(
+                          "You already have an active trip. Please complete it before starting a new one.",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("OK"),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddNewTrip(),
+                      ),
+                    );
+                  }
                 },
               ),
             ),

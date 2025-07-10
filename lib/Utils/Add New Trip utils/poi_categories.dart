@@ -1,0 +1,26 @@
+final List<Map<String, dynamic>> poiCategories = [
+  {'label': 'Fuel', 'icon': '🛢️', 'types': 'gas_station'},
+  {
+    'label': 'Convenience',
+    'icon': '🛒',
+    'types': 'convenience_store|store|supermarket',
+  },
+  {'label': 'Truck Stops', 'icon': '🛑', 'keyword': 'truck stop'},
+  {'label': 'Food', 'icon': '🍔', 'types': 'restaurant|food|cafe'},
+  {'label': 'Parking', 'icon': '🅿️', 'types': 'parking'},
+  {'label': 'Truck Wash', 'icon': '🧽', 'types': 'car_wash'},
+  {'label': 'Walmart', 'icon': '🏪', 'keyword': 'Walmart'},
+  {'label': 'Gym', 'icon': '🏋️', 'types': 'gym'},
+  {'label': 'ATM/Bank', 'icon': '💵', 'types': 'atm|bank|finance'},
+  {'label': 'Weigh Station', 'icon': '⚖️', 'keyword': 'weigh station'},
+  {'label': 'Mechanics', 'icon': '🔧', 'types': 'car_repair'},
+  {'label': 'Medical', 'icon': '🏥', 'types': 'hospital|doctor|pharmacy'},
+  {'label': 'Rest/Hotels', 'icon': '🏨', 'types': 'lodging'},
+  {
+    'label': 'EV Charging',
+    'icon': '🔋',
+    'types': 'electric_vehicle_charging_station',
+  },
+  {'label': 'Warehouses', 'icon': '📦', 'types': 'storage|moving_company'},
+  {'label': 'Border/Toll', 'icon': '🛃', 'keyword': 'toll'},
+];

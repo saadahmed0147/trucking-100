@@ -26,24 +26,48 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
   Future<List<Map<String, dynamic>>> fetchTrips() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return [];
-    final dbRef = FirebaseDatabase.instance.ref('trips/${user.uid}');
+
+    final dbRef = FirebaseDatabase.instance.ref('trips');
     final snapshot = await dbRef.get();
     if (!snapshot.exists) return [];
+
     final tripsMap = snapshot.value as Map<dynamic, dynamic>?;
     if (tripsMap == null) return [];
-    return tripsMap.entries.map((e) {
-      final data = Map<String, dynamic>.from(e.value as Map);
-      data['id'] = e.key;
-      return data;
-    }).toList();
+
+    return tripsMap.entries
+        .map((e) {
+          final data = Map<String, dynamic>.from(e.value as Map);
+          data['id'] = e.key;
+          return data;
+        })
+        .where((trip) => trip['userEmail'] == user.email)
+        .toList();
+  }
+
+  Future<bool> hasActiveTrip() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    final dbRef = FirebaseDatabase.instance.ref('trips');
+    final snapshot = await dbRef.get();
+    if (!snapshot.exists) return false;
+
+    final tripsMap = snapshot.value as Map<dynamic, dynamic>?;
+    if (tripsMap == null) return false;
+
+    for (final entry in tripsMap.entries) {
+      final data = Map<String, dynamic>.from(entry.value);
+      if (data['userEmail'] == user.email && data['status'] == 'active') {
+        return true;
+      }
+    }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.tabsBgColor,
-
-      /// 👇 Main body
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _tripFuture,
         builder: (context, snapshot) {
@@ -60,13 +84,12 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
           final trips = snapshot.data ?? [];
 
           if (trips.isEmpty) {
-            // 👇 Show placeholder UI when no trips
             return SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    height: mq.height * 0.3,
+                    height: MediaQuery.of(context).size.height * 0.3,
                     width: double.infinity,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
@@ -118,7 +141,6 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
               ),
             );
           } else {
-            // Show trip list with details and navigation
             return ListView.builder(
               padding: const EdgeInsets.all(20),
               itemCount: trips.length,
@@ -198,8 +220,6 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
           }
         },
       ),
-
-      /// 👇 Floating action button
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(30),
         child: RoundButton(
@@ -208,7 +228,27 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
           title: "Create New Trip",
           fontSize: 17,
           borderRadius: 30,
-          onPress: () {
+          onPress: () async {
+            final activeTrip = await hasActiveTrip();
+            if (activeTrip) {
+              showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text("Active Trip"),
+                  content: const Text(
+                    "You already have an active trip. Please complete your current trip before creating a new one.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("OK"),
+                    ),
+                  ],
+                ),
+              );
+              return;
+            }
+
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const AddNewTrip()),

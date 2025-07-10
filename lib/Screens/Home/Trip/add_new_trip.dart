@@ -67,6 +67,24 @@ class _AddNewTripState extends State<AddNewTrip> {
     polylines.clear();
     polylineCoordinates.clear();
 
+    final url =
+        'https://maps.googleapis.com/maps/api/directions/json?origin=${origin!.latitude},${origin!.longitude}&destination=${destination!.latitude},${destination!.longitude}&key=$apiKey';
+
+    final response = await http.get(Uri.parse(url));
+    final data = jsonDecode(response.body);
+
+    if (data['status'] == 'ZERO_RESULTS' || data['routes'].isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No route found between selected locations. Please choose valid locations.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final newPolylines = await DirectionsService.getDirections(
       origin: origin!,
       destination: destination!,
@@ -175,6 +193,38 @@ class _AddNewTripState extends State<AddNewTrip> {
                     controller: _pickupController,
                     isPickup: true,
                     onChanged: (val) => _getPlacePredictions(val, true),
+                    suffixIcon: IconButton(
+                      icon: const Icon(
+                        Icons.gps_fixed,
+                        color: Colors.blueAccent,
+                      ),
+                      onPressed: () async {
+                        if (currentLocation != null) {
+                          // Get address from lat/lng
+                          String locationName = await getAddressFromLatLng(
+                            currentLocation!,
+                          );
+                          _pickupController.text = locationName;
+                          setState(() {
+                            origin = currentLocation;
+                            _pickupPredictions = [];
+                          });
+                          // Optionally update route if destination is set
+                          if (destination != null) {
+                            updateMarkersAndRoute(
+                              origin: origin!,
+                              destination: destination!,
+                              markers: markers,
+                              polylines: polylines,
+                              polylineCoordinates: polylineCoordinates,
+                              controllerCompleter: _controller,
+                              apiKey: apiKey,
+                              updateUI: () => setState(() {}),
+                            );
+                          }
+                        }
+                      },
+                    ),
                   ),
 
                   buildPredictionList(
@@ -254,6 +304,7 @@ class _AddNewTripState extends State<AddNewTrip> {
                           });
 
                           if (!isSelected) {
+                            // Always use the correct reference location
                             await fetchNearbyPlaces(
                               category: cat,
                               origin: origin,
@@ -360,29 +411,30 @@ class _AddNewTripState extends State<AddNewTrip> {
                   return;
                 }
 
+                // Check if route exists before navigating
+                final url =
+                    'https://maps.googleapis.com/maps/api/directions/json?origin=${origin!.latitude},${origin!.longitude}&destination=${destination!.latitude},${destination!.longitude}&key=$apiKey';
+                final response = await http.get(Uri.parse(url));
+                final data = jsonDecode(response.body);
+
+                if (data['status'] == 'ZERO_RESULTS' ||
+                    data['routes'].isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'No route found between selected locations. Please choose valid locations.',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
                 // ✅ Proceed to next screen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) {
-                      print('''
-🚛 Trip Details:
--------------------------
-📍 Pickup Location: ${_pickupController.text}
-📍 Destination: ${_destinationController.text}
-
-👤 User Name: ${user.displayName ?? 'N/A'}
-📧 User Email: ${user.email ?? 'N/A'}
-
-🌍 Pickup Coordinates:
-   - Latitude: ${origin!.latitude}
-   - Longitude: ${origin!.longitude}
-
-🌍 Destination Coordinates:
-   - Latitude: ${destination!.latitude}
-   - Longitude: ${destination!.longitude}
--------------------------
-''');
                       return CalculatorScreen(
                         pickup: _pickupController.text,
                         destination: _destinationController.text,
@@ -408,5 +460,17 @@ class _AddNewTripState extends State<AddNewTrip> {
         ),
       ),
     );
+  }
+
+  // Add this helper function to your class:
+  Future<String> getAddressFromLatLng(LatLng latLng) async {
+    final url =
+        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${latLng.latitude},${latLng.longitude}&key=$apiKey';
+    final response = await http.get(Uri.parse(url));
+    final data = jsonDecode(response.body);
+    if (data['results'] != null && data['results'].isNotEmpty) {
+      return data['results'][0]['formatted_address'];
+    }
+    return "Current Location";
   }
 }

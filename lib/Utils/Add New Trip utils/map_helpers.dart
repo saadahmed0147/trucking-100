@@ -1,5 +1,4 @@
-
- import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -173,6 +172,7 @@ Widget buildSearchBox({
   required TextEditingController controller,
   required bool isPickup,
   required Function(String) onChanged,
+  Widget? suffixIcon,
 }) {
   return Container(
     margin: const EdgeInsets.only(bottom: 8),
@@ -189,6 +189,7 @@ Widget buildSearchBox({
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey.shade600),
         prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
+        suffixIcon: suffixIcon,
         border: InputBorder.none,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,

@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _loading = false;
   bool _googleSigninLoading = false;
-  bool _facebookSigninLoading = false;
+  // bool _facebookSigninLoading = false;
 
   FocusNode emailFocusNode = FocusNode();
   FocusNode passFocusNode = FocusNode();
@@ -62,17 +62,17 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _signInWithFacebook() {
-    final authService = AuthService();
+  // void _signInWithFacebook() {
+  //   final authService = AuthService();
 
-    authService.signInWithFacebook(
-      context: context,
-      onStart: () => setState(() => _facebookSigninLoading = true),
-      onComplete: () {
-        if (mounted) setState(() => _facebookSigninLoading = false);
-      },
-    );
-  }
+  //   authService.signInWithFacebook(
+  //     context: context,
+  //     onStart: () => setState(() => _facebookSigninLoading = true),
+  //     onComplete: () {
+  //       if (mounted) setState(() => _facebookSigninLoading = false);
+  //     },
+  //   );
+  // }
 
   void _signInWithGoogle() {
     final authService = AuthService();

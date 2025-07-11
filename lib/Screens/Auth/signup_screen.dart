@@ -43,17 +43,17 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _signInWithFacebook() {
-    final authService = AuthService();
+  // void _signInWithFacebook() {
+  //   final authService = AuthService();
 
-    authService.signInWithFacebook(
-      context: context,
-      onStart: () => setState(() => _googleSigninLoading = true),
-      onComplete: () {
-        if (mounted) setState(() => _googleSigninLoading = false);
-      },
-    );
-  }
+  //   authService.signInWithFacebook(
+  //     context: context,
+  //     onStart: () => setState(() => _googleSigninLoading = true),
+  //     onComplete: () {
+  //       if (mounted) setState(() => _googleSigninLoading = false);
+  //     },
+  //   );
+  // }
 
   void _signInWithGoogle() {
     final authService = AuthService();

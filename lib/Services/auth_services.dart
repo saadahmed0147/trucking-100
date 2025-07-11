@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+// import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:fuel_route/Routes/route_names.dart';
 import 'package:fuel_route/Utils/utils.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -12,56 +12,56 @@ class AuthService {
   final DatabaseReference _dbRef = FirebaseDatabase.instance.ref();
 
   // Facebook Sign-In
-  Future<UserCredential?> signInWithFacebook({
-    required BuildContext context,
-    required VoidCallback onStart,
-    required VoidCallback onComplete,
-  }) async {
-    onStart();
+  // Future<UserCredential?> signInWithFacebook({
+  //   required BuildContext context,
+  //   required VoidCallback onStart,
+  //   required VoidCallback onComplete,
+  // }) async {
+  //   onStart();
 
-    try {
-      final LoginResult result = await FacebookAuth.instance.login();
+  //   try {
+  //     final LoginResult result = await FacebookAuth.instance.login();
 
-      if (result.status == LoginStatus.success) {
-        final accessToken = result.accessToken;
-        final credential = FacebookAuthProvider.credential(accessToken!.token);
+  //     if (result.status == LoginStatus.success) {
+  //       final accessToken = result.accessToken;
+  //       final credential = FacebookAuthProvider.credential(accessToken!.token);
 
-        final res = await _auth.signInWithCredential(credential);
-        final user = res.user;
+  //       final res = await _auth.signInWithCredential(credential);
+  //       final user = res.user;
 
-        if (user != null) {
-          // ✅ Save user data to Realtime Database
-          await _dbRef.child("users/${user.uid}").set({
-            'uid': user.uid,
-            'email': user.email ?? '',
-            'name': user.displayName ?? '',
-            'phone': user.phoneNumber ?? '',
-          });
+  //       if (user != null) {
+  //         // ✅ Save user data to Realtime Database
+  //         await _dbRef.child("users/${user.uid}").set({
+  //           'uid': user.uid,
+  //           'email': user.email ?? '',
+  //           'name': user.displayName ?? '',
+  //           'phone': user.phoneNumber ?? '',
+  //         });
 
-          Utils.flushBarErrorMessage(
-            'Welcome, ${user.displayName}',
-            context,
-            success: true,
-          );
+  //         Utils.flushBarErrorMessage(
+  //           'Welcome, ${user.displayName}',
+  //           context,
+  //           success: true,
+  //         );
 
-          Navigator.pushReplacementNamed(context, RouteNames.homeScreen);
-          return res;
-        } else {
-          Utils.flushBarErrorMessage("User data is null.", context);
-          return null;
-        }
-      } else {
-        Utils.flushBarErrorMessage('Facebook Sign-In canceled.', context);
-        return null;
-      }
-    } catch (e) {
-      debugPrint('🔥 Facebook Sign-In error: $e');
-      Utils.flushBarErrorMessage('Facebook Sign-In failed.', context);
-      return null;
-    } finally {
-      onComplete();
-    }
-  }
+  //         Navigator.pushReplacementNamed(context, RouteNames.homeScreen);
+  //         return res;
+  //       } else {
+  //         Utils.flushBarErrorMessage("User data is null.", context);
+  //         return null;
+  //       }
+  //     } else {
+  //       Utils.flushBarErrorMessage('Facebook Sign-In canceled.', context);
+  //       return null;
+  //     }
+  //   } catch (e) {
+  //     debugPrint('🔥 Facebook Sign-In error: $e');
+  //     Utils.flushBarErrorMessage('Facebook Sign-In failed.', context);
+  //     return null;
+  //   } finally {
+  //     onComplete();
+  //   }
+  // }
 
   Future<UserCredential?> signInWithGoogle({
     required BuildContext context,
@@ -238,9 +238,7 @@ class AuthService {
     } catch (e) {
       Utils.flushBarErrorMessage(e.toString(), context);
     } finally {
-      onComplete(
-        
-      );
+      onComplete();
     }
   }
 }

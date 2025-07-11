@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fuel_route/Screens/Home/Trip/history_dashboard_screen.dart';
+import 'package:fuel_route/Screens/Home/history_dashboard_screen.dart';
 import 'package:fuel_route/Screens/Home/Trip/trip_planner_screen.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 

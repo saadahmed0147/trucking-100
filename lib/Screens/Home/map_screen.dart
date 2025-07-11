@@ -1,183 +1,474 @@
+import 'dart:async';
 import 'dart:convert';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
+import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
+import 'package:fuel_route/Utils/app_colors.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:geocoding/geocoding.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final String pickup;
+  final String destination;
+  final double pickupLat;
+  final double pickupLng;
+  final double destinationLat;
+  final double destinationLng;
+  final String tripId;
+
+  const MapScreen({
+    super.key,
+    required this.pickup,
+    required this.destination,
+    required this.pickupLat,
+    required this.pickupLng,
+    required this.destinationLat,
+    required this.destinationLng,
+    required this.tripId,
+  });
 
   @override
   State<MapScreen> createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
-  final TextEditingController originController = TextEditingController();
-  final TextEditingController destinationController = TextEditingController();
+  final Completer<GoogleMapController> _controller = Completer();
+  final TextEditingController _pickupController = TextEditingController();
+  final TextEditingController _destinationController = TextEditingController();
 
-  GoogleMapController? _mapController;
-  Set<Polyline> _polylines = {};
-  LatLng _initialPosition = const LatLng(37.7749, -122.4194); // Default to SF
+  LatLng? origin;
+  LatLng? destination;
+  LatLng? currentLocation;
+
+  Set<Marker> markers = {};
+  Set<Polyline> polylines = {};
+  List<LatLng> polylineCoordinates = [];
+  List<dynamic> _pickupPredictions = [];
+  List<dynamic> _destinationPredictions = [];
+
+  final String apiKey = 'AIzaSyDo8HGqkDwHuSuxcWAkHuK7H_gv1ThasBg';
+
+  Set<String> selectedCategories = {};
+  StreamSubscription? locationStream;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedCategories = {};
+    _pickupController.text = widget.pickup;
+    _destinationController.text = widget.destination;
+    origin = LatLng(widget.pickupLat, widget.pickupLng);
+    destination = LatLng(widget.destinationLat, widget.destinationLng);
+    // Set markers for pickup and destination
+    markers.add(
+      Marker(
+        markerId: const MarkerId('pickup'),
+        position: origin!,
+        infoWindow: const InfoWindow(title: 'Pickup'),
+      ),
+    );
+    markers.add(
+      Marker(
+        markerId: const MarkerId('destination'),
+        position: destination!,
+        infoWindow: const InfoWindow(title: 'Destination'),
+      ),
+    );
+    getDirections();
+    startLocationUpdates();
+  }
+
+  @override
+  void dispose() {
+    locationStream?.cancel();
+    super.dispose();
+  }
+
+  void startLocationUpdates() {
+    locationStream = Geolocator.getPositionStream().listen((position) async {
+      currentLocation = LatLng(position.latitude, position.longitude);
+      // Update pickup marker
+      setState(() {
+        markers.removeWhere((m) => m.markerId.value == 'pickup');
+        markers.add(
+          Marker(
+            markerId: const MarkerId('pickup'),
+            position: currentLocation!,
+            infoWindow: const InfoWindow(title: 'Pickup (Live)'),
+          ),
+        );
+      });
+      // Update pickup location in Firebase
+      final dbRef = FirebaseDatabase.instance.ref('trips/${widget.tripId}');
+      await dbRef.update({
+        'pickupLat': position.latitude,
+        'pickupLng': position.longitude,
+        'pickup': await getAddressFromLatLng(currentLocation!),
+        'currentLocationUpdatedAt': DateTime.now().toIso8601String(),
+      });
+      // Update search bar
+      _pickupController.text = await getAddressFromLatLng(currentLocation!);
+    });
+  }
+
+  Future<void> getDirections() async {
+    polylines.clear();
+    polylineCoordinates.clear();
+    final url =
+        'https://maps.googleapis.com/maps/api/directions/json?origin=${origin!.latitude},${origin!.longitude}&destination=${destination!.latitude},${destination!.longitude}&key=$apiKey';
+    final response = await http.get(Uri.parse(url));
+    final data = jsonDecode(response.body);
+    if (data['status'] == 'ZERO_RESULTS' || data['routes'].isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No route found between selected locations. Please choose valid locations.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    final newPolylines = await DirectionsService.getDirections(
+      origin: origin!,
+      destination: destination!,
+      apiKey: apiKey,
+      polylineCoordinates: polylineCoordinates,
+    );
+    setState(() {
+      polylines.addAll(newPolylines);
+    });
+  }
+
+  LatLng getInitialMapTarget() {
+    if (origin?.latitude != null && origin?.longitude != null) {
+      return LatLng(origin!.latitude, origin!.longitude);
+    } else if (currentLocation != null) {
+      return currentLocation!;
+    } else {
+      return const LatLng(37.773972, -122.431297);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("FuelRoute Dashboard")),
-      body: Column(
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                TextField(
-                  controller: originController,
-                  decoration: const InputDecoration(
-                    labelText: 'Origin',
-                    border: OutlineInputBorder(),
+          GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: getInitialMapTarget(),
+              zoom: 5,
+            ),
+            markers: markers,
+            polylines: polylines,
+            onMapCreated: (GoogleMapController controller) {
+              _controller.complete(controller);
+            },
+          ),
+          Positioned(
+            top: 40,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _pickupController,
+                          readOnly: true,
+                          decoration: const InputDecoration(
+                            labelText: "Pickup Location",
+                            prefixIcon: Icon(Icons.location_on),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.gps_fixed,
+                          color: Colors.blueAccent,
+                        ),
+                        tooltip: "Use current location",
+                        onPressed: () async {
+                          Position position =
+                              await Geolocator.getCurrentPosition();
+                          LatLng newLoc = LatLng(
+                            position.latitude,
+                            position.longitude,
+                          );
+                          _pickupController.text = await getAddressFromLatLng(
+                            newLoc,
+                          );
+                          setState(() {
+                            origin = newLoc;
+                            markers.removeWhere(
+                              (m) => m.markerId.value == 'pickup',
+                            );
+                            markers.add(
+                              Marker(
+                                markerId: const MarkerId('pickup'),
+                                position: newLoc,
+                                infoWindow: const InfoWindow(
+                                  title: 'Pickup (GPS)',
+                                ),
+                              ),
+                            );
+                          });
+                          // Optionally update route
+                          getDirections();
+                          // Update in Firebase
+                          final dbRef = FirebaseDatabase.instance.ref(
+                            'trips/${widget.tripId}',
+                          );
+                          await dbRef.update({
+                            'pickupLat': position.latitude,
+                            'pickupLng': position.longitude,
+                            'pickup': await getAddressFromLatLng(newLoc),
+                            'currentLocationUpdatedAt': DateTime.now()
+                                .toIso8601String(),
+                          });
+                        },
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: destinationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Destination',
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _destinationController,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: "Destination",
+                      prefixIcon: Icon(Icons.flag),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: _drawRoute,
-                  child: const Text("Draw Route"),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          Expanded(
-            child: GoogleMap(
-              onMapCreated: (controller) => _mapController = controller,
-              initialCameraPosition: CameraPosition(
-                target: _initialPosition,
-                zoom: 10,
-              ),
-              polylines: _polylines,
-              myLocationEnabled: true,
-              myLocationButtonEnabled: true,
-            ),
+          DraggableScrollableSheet(
+            initialChildSize: 0.25,
+            minChildSize: 0.2,
+            maxChildSize: 0.6,
+            builder: (context, scrollController) {
+              return Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Text(
+                        "Find Places on Route",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 1,
+                            ),
+                        itemCount: poiCategories.length,
+                        itemBuilder: (context, index) {
+                          final cat = poiCategories[index];
+                          final catKey = cleanLabel(cat['label']);
+                          final isSelected = selectedCategories.contains(
+                            catKey,
+                          );
+
+                          return GestureDetector(
+                            onTap: () async {
+                              final isSelected = selectedCategories.contains(
+                                catKey,
+                              );
+                              setState(() {
+                                // Only allow one active category at a time
+                                selectedCategories.clear();
+                                if (!isSelected) {
+                                  selectedCategories.add(catKey);
+                                }
+                              });
+
+                              // Always clear all POI markers before showing new ones
+                              Set<Marker> newCategoryMarkers = {};
+                              if (selectedCategories.isNotEmpty) {
+                                final activeCatKey = selectedCategories.first;
+                                final activeCat = poiCategories.firstWhere(
+                                  (c) => cleanLabel(c['label']) == activeCatKey,
+                                );
+                                await fetchNearbyPlaces(
+                                  category: activeCat,
+                                  origin: origin,
+                                  destination: destination,
+                                  currentLocation: currentLocation,
+                                  apiKey: apiKey,
+                                  markers: newCategoryMarkers,
+                                  onMarkersUpdated: (_) {},
+                                  routePolyline:
+                                      (origin != null &&
+                                          destination != null &&
+                                          polylineCoordinates.isNotEmpty)
+                                      ? polylineCoordinates
+                                      : null,
+                                );
+                              }
+                              // Remove all previous POI markers
+                              markers.removeWhere(
+                                (m) => m.markerId.value.startsWith("poi_"),
+                              );
+                              // Add only the new markers for the active category
+                              setState(() {
+                                markers.addAll(newCategoryMarkers);
+                              });
+                            },
+
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+
+                              decoration: BoxDecoration(
+                                gradient: isSelected
+                                    ? const LinearGradient(
+                                        colors: [
+                                          Colors.blue,
+                                          Colors.blueAccent,
+                                        ],
+                                      )
+                                    : null,
+                                color: isSelected ? null : Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.black),
+                                boxShadow: isSelected
+                                    ? [
+                                        const BoxShadow(
+                                          color: Colors.blueAccent,
+                                          blurRadius: 5,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              child: Center(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      cat["icon"],
+                                      color: AppColors.splashBgColor,
+                                      size: 35,
+                                    ),
+                                    Text(
+                                      cat['label'],
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : Colors.blue,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 05, 16, 24),
+        child: SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              textStyle: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            child: const Text('End trip'),
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Confirm End Trip'),
+                  content: const Text(
+                    'Are you sure you want to end the current trip?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('End Trip'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                final dbRef = FirebaseDatabase.instance.ref(
+                  'trips/${widget.tripId}',
+                );
+                await dbRef.update({'status': 'completed'});
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Trip ended and marked as completed.'),
+                    backgroundColor: AppColors.lightBlueColor,
+                  ),
+                );
+
+                Navigator.pop(context);
+              }
+            },
+          ),
+        ),
       ),
     );
   }
 
-  Future<void> _drawRoute() async {
-    final origin = originController.text;
-    final destination = destinationController.text;
-
-    if (origin.isEmpty || destination.isEmpty) return;
-
-    try {
-      final originLatLng = await _getLatLngFromAddress(origin);
-      final destinationLatLng = await _getLatLngFromAddress(destination);
-
-      final directions = await _getDirections(originLatLng, destinationLatLng);
-
-      if (directions != null) {
-        final List<LatLng> points = _decodePolyline(
-          directions['overview_polyline']['points'],
-        );
-
-        setState(() {
-          _polylines = {
-            Polyline(
-              polylineId: const PolylineId('route'),
-              points: points,
-              color: Colors.blue,
-              width: 5,
-            ),
-          };
-        });
-
-        // Move camera to start
-        _mapController?.animateCamera(
-          CameraUpdate.newLatLngBounds(_getLatLngBounds(points), 50),
-        );
-      }
-    } catch (e) {
-      print('Error drawing route: $e');
-    }
-  }
-
-  Future<LatLng> _getLatLngFromAddress(String address) async {
-    List<Location> locations = await locationFromAddress(address);
-    final loc = locations.first;
-    return LatLng(loc.latitude, loc.longitude);
-  }
-
-  Future<Map<String, dynamic>?> _getDirections(
-    LatLng origin,
-    LatLng destination,
-  ) async {
-    const apiKey = String.fromEnvironment(
-      "AIzaSyDo8HGqkDwHuSuxcWAkHuK7H_gv1ThasBg",
-    ); // ✅ or just paste it here temporarily
-
+  Future<String> getAddressFromLatLng(LatLng latLng) async {
     final url =
-        'https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=$apiKey';
-
+        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${latLng.latitude},${latLng.longitude}&key=$apiKey';
     final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if ((data['routes'] as List).isNotEmpty) {
-        return data['routes'][0];
-      }
+    final data = jsonDecode(response.body);
+    if (data['results'] != null && data['results'].isNotEmpty) {
+      return data['results'][0]['formatted_address'];
     }
-    return null;
-  }
-
-  List<LatLng> _decodePolyline(String encoded) {
-    List<LatLng> poly = [];
-    int index = 0, len = encoded.length;
-    int lat = 0, lng = 0;
-
-    while (index < len) {
-      int b, shift = 0, result = 0;
-      do {
-        b = encoded.codeUnitAt(index++) - 63;
-        result |= (b & 0x1F) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlat = ((result & 1) != 0) ? ~(result >> 1) : (result >> 1);
-      lat += dlat;
-
-      shift = 0;
-      result = 0;
-      do {
-        b = encoded.codeUnitAt(index++) - 63;
-        result |= (b & 0x1F) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlng = ((result & 1) != 0) ? ~(result >> 1) : (result >> 1);
-      lng += dlng;
-
-      poly.add(LatLng(lat / 1E5, lng / 1E5));
-    }
-
-    return poly;
-  }
-
-  LatLngBounds _getLatLngBounds(List<LatLng> points) {
-    final swLat = points.map((p) => p.latitude).reduce((a, b) => a < b ? a : b);
-    final swLng = points
-        .map((p) => p.longitude)
-        .reduce((a, b) => a < b ? a : b);
-    final neLat = points.map((p) => p.latitude).reduce((a, b) => a > b ? a : b);
-    final neLng = points
-        .map((p) => p.longitude)
-        .reduce((a, b) => a > b ? a : b);
-
-    return LatLngBounds(
-      southwest: LatLng(swLat, swLng),
-      northeast: LatLng(neLat, neLng),
-    );
+    return "Current Location";
   }
 }

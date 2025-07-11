@@ -8,15 +8,13 @@ import 'dart:convert';
 
 //
 // Function to clean up labels by removing special characters and spaces
- String cleanLabel(String label) {
-    return label
-        .replaceAll(RegExp(r'[^\w\s]+'), '')
-        .replaceAll(" ", "")
-        .toLowerCase();
-  }
+String cleanLabel(String label) {
+  return label
+      .replaceAll(RegExp(r'[^\w\s]+'), '')
+      .replaceAll(" ", "")
+      .toLowerCase();
+}
 
-
- 
 // marker and route update function
 Future<void> updateMarkersAndRoute({
   required LatLng origin,
@@ -35,9 +33,7 @@ Future<void> updateMarkersAndRoute({
   polylines.clear();
   polylineCoordinates.clear();
 
-  markers.add(
-    Marker(markerId: const MarkerId("origin"), position: origin),
-  );
+  markers.add(Marker(markerId: const MarkerId("origin"), position: origin));
   markers.add(
     Marker(markerId: const MarkerId("destination"), position: destination),
   );
@@ -71,12 +67,20 @@ Future<void> updateMarkersAndRoute({
   // Animate camera to bounds
   LatLngBounds bounds = LatLngBounds(
     southwest: LatLng(
-      origin.latitude < destination.latitude ? origin.latitude : destination.latitude,
-      origin.longitude < destination.longitude ? origin.longitude : destination.longitude,
+      origin.latitude < destination.latitude
+          ? origin.latitude
+          : destination.latitude,
+      origin.longitude < destination.longitude
+          ? origin.longitude
+          : destination.longitude,
     ),
     northeast: LatLng(
-      origin.latitude > destination.latitude ? origin.latitude : destination.latitude,
-      origin.longitude > destination.longitude ? origin.longitude : destination.longitude,
+      origin.latitude > destination.latitude
+          ? origin.latitude
+          : destination.latitude,
+      origin.longitude > destination.longitude
+          ? origin.longitude
+          : destination.longitude,
     ),
   );
 
@@ -86,7 +90,6 @@ Future<void> updateMarkersAndRoute({
   // Call setState via passed callback
   updateUI();
 }
-
 
 // Function to determine the user's current position and update markers
 Future<LatLng?> determinePosition(
@@ -117,8 +120,6 @@ Future<LatLng?> determinePosition(
     return null;
   }
 }
-
-
 
 // Function to build a list of predictions for autocomplete
 Widget buildPredictionList({
@@ -166,6 +167,7 @@ Widget buildPredictionList({
     ),
   );
 }
+
 // Function to build a search box for entering pickup or drop-off locations
 Widget buildSearchBox({
   required String hint,
@@ -198,10 +200,7 @@ Widget buildSearchBox({
       ),
     ),
   );
-
 }
-
-
 
 // Directions service to fetch route details and polyline
 class DirectionsService {
@@ -242,8 +241,6 @@ class DirectionsService {
   }
 }
 
-
-
 // Function to fetch nearby places based on category and location
 Future<void> fetchNearbyPlaces({
   required Map<String, dynamic> category,
@@ -253,61 +250,83 @@ Future<void> fetchNearbyPlaces({
   required String apiKey,
   required Set<Marker> markers,
   required Function(Set<Marker>) onMarkersUpdated,
+  List<LatLng>? routePolyline, // NEW: pass polyline points if available
 }) async {
   if (currentLocation == null) return;
 
-  LatLng referenceLocation = origin != null && destination != null
-      ? LatLng(
-          (origin.latitude + destination.latitude) / 2,
-          (origin.longitude + destination.longitude) / 2,
-        )
-      : currentLocation;
-
-  final locationStr = '${referenceLocation.latitude},${referenceLocation.longitude}';
-
-  final String url = category.containsKey('types')
-      ? 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$locationStr&radius=7000&type=${category['types'].split("|")[0]}&key=$apiKey'
-      : 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$locationStr&radius=7000&keyword=${category['keyword']}&key=$apiKey';
-
-  final response = await http.get(Uri.parse(url));
-  final data = jsonDecode(response.body);
-
-  if (data['results'] != null && data['results'].isNotEmpty) {
-    String cleanLabel(String label) {
-      return label.replaceAll(RegExp(r'[^\w\s]+'), '').replaceAll(" ", "").toLowerCase();
+  // Helper to fetch POIs for a location
+  Future<List<Map<String, dynamic>>> fetchPOIsForLocation(
+    LatLng location,
+  ) async {
+    final locationStr = '${location.latitude},${location.longitude}';
+    final String url = category.containsKey('types')
+        ? 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$locationStr&radius=3000&type=${category['types'].split("|")[0]}&key=$apiKey'
+        : 'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$locationStr&radius=3000&keyword=${category['keyword']}&key=$apiKey';
+    final response = await http.get(Uri.parse(url));
+    final data = jsonDecode(response.body);
+    if (data['results'] != null && data['results'].isNotEmpty) {
+      return List<Map<String, dynamic>>.from(data['results']);
     }
+    return [];
+  }
 
-    final catKey = cleanLabel(category['label']);
-    Set<String> addedCoords = {};
+  // If route is set, sample points along polyline
+  List<LatLng> samplePoints = [];
+  if (origin != null &&
+      destination != null &&
+      routePolyline != null &&
+      routePolyline.isNotEmpty) {
+    // Sample every ~2km or max 10 points
+    int sampleCount = routePolyline.length < 10 ? routePolyline.length : 10;
+    for (int i = 0; i < sampleCount; i++) {
+      int idx = ((routePolyline.length - 1) * i ~/ (sampleCount - 1)).clamp(
+        0,
+        routePolyline.length - 1,
+      );
+      samplePoints.add(routePolyline[idx]);
+    }
+  } else {
+    // Fallback: midpoint or current location
+    samplePoints = [
+      origin != null && destination != null
+          ? LatLng(
+              (origin.latitude + destination.latitude) / 2,
+              (origin.longitude + destination.longitude) / 2,
+            )
+          : currentLocation,
+    ];
+  }
 
-    Set<Marker> newMarkers = {};
-
-    for (var result in data['results']) {
+  // Fetch POIs for all sample points
+  Set<String> addedCoords = {};
+  Set<Marker> newMarkers = {};
+  String catKey = cleanLabel(category['label']);
+  for (LatLng point in samplePoints) {
+    List<Map<String, dynamic>> results = await fetchPOIsForLocation(point);
+    for (var result in results) {
       final lat = result['geometry']['location']['lat'];
       final lng = result['geometry']['location']['lng'];
       final name = result['name'];
       final id = result['place_id'];
       final coordKey = '$lat,$lng';
-
       if (addedCoords.contains(coordKey)) continue;
       addedCoords.add(coordKey);
-
       final markerId = "poi_${catKey}_$id";
-
       newMarkers.add(
         Marker(
           markerId: MarkerId(markerId),
           position: LatLng(lat, lng),
           infoWindow: InfoWindow(title: name),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueAzure,
+          ),
         ),
       );
     }
-
-    // Merge with existing markers
-    markers.addAll(newMarkers);
-    onMarkersUpdated(markers); // call callback to trigger UI update
   }
+  // Merge with existing markers
+  markers.addAll(newMarkers);
+  onMarkersUpdated(markers); // call callback to trigger UI update
 }
 
 // Function to get latitude and longitude of a place by its ID

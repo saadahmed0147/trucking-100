@@ -22,14 +22,25 @@ class RecentTripList extends StatelessWidget {
       );
     }
 
+    // Sort trips by latest (assuming 'date' or 'createdAt' field exists)
+    List<Map<String, String>> sortedTrips = List.from(trips);
+    sortedTrips.sort((a, b) {
+      final aDate =
+          DateTime.tryParse(a['date'] ?? a['createdAt'] ?? '') ??
+          DateTime(2000);
+      final bDate =
+          DateTime.tryParse(b['date'] ?? b['createdAt'] ?? '') ??
+          DateTime(2000);
+      return bDate.compareTo(aDate); // latest first
+    });
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: trips.length,
-
+      itemCount: sortedTrips.length,
       itemBuilder: (context, index) {
-        final trip = trips[index];
-        final isActive = trip['status'] == 'Active';
+        final trip = sortedTrips[index];
+        final isActive = trip['status'] == 'ACTIVE';
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),

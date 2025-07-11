@@ -42,13 +42,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 return Column(
                   children: [
                     Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(30),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight * 0.6,
-                          ),
-                          child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight * 0.6,
+                        ),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(30),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,

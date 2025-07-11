@@ -3,9 +3,8 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/add_new_trip.dart';
-import 'package:fuel_route/Screens/Home/Trip/calculator_screen.dart';
+import 'package:fuel_route/Screens/Home/map_screen.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
-import 'package:fuel_route/main.dart';
 
 class TripPlannerScreen extends StatefulWidget {
   const TripPlannerScreen({super.key});
@@ -34,13 +33,17 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
     final tripsMap = snapshot.value as Map<dynamic, dynamic>?;
     if (tripsMap == null) return [];
 
+    // Only return trips with status 'active' for this user
     return tripsMap.entries
         .map((e) {
           final data = Map<String, dynamic>.from(e.value as Map);
           data['id'] = e.key;
           return data;
         })
-        .where((trip) => trip['userEmail'] == user.email)
+        .where(
+          (trip) =>
+              trip['userEmail'] == user.email && trip['status'] == 'active',
+        )
         .toList();
   }
 
@@ -160,23 +163,53 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                       itemCount: trips.length,
                       itemBuilder: (context, index) {
                         final trip = trips[index];
-                        return Card(
-                          elevation: 5,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          margin: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 4,
-                          ),
-                          child: InkWell(
-                            radius: 70,
-                            onTap: () {
-                           
-                            },
+                        return InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => MapScreen(
+                                  pickup: trip['pickup'],
+                                  destination: trip['destination'],
+                                  pickupLat: trip['pickupLat'],
+                                  pickupLng: trip['pickupLng'],
+                                  destinationLat: trip['destinationLat'],
+                                  destinationLng: trip['destinationLng'],
+                                  tripId: trip['id'],
+                                ),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(18),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(
+                              vertical: 12,
+                              horizontal: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.blueAccent.withOpacity(0.08),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                              border: Border(
+                                left: BorderSide(
+                                  color: trip['status'] == 'active'
+                                      ? AppColors.lightBlueColor
+                                      : Colors.deepOrange,
+                                  width: 6,
+                                ),
+                              ),
+                            ),
                             child: Padding(
                               padding: const EdgeInsets.all(18),
                               child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
@@ -193,13 +226,13 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 18,
-                                            color: AppColors.blackColor,
+                                            color: Colors.black,
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 18),
                                   Row(
                                     children: [
                                       const Icon(
@@ -214,17 +247,17 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 18,
-                                            color: AppColors.blackColor,
+                                            color: Colors.black,
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 12),
                                   Divider(color: Colors.grey[300]),
                                   const SizedBox(height: 8),
                                   Wrap(
-                                    spacing: 16,
+                                    spacing: 12,
                                     runSpacing: 8,
                                     children: [
                                       if (trip['date'] != null)
@@ -271,6 +304,28 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                             ),
                                           ),
                                           backgroundColor: Colors.green,
+                                        ),
+                                      if (trip['status'] != null)
+                                        Chip(
+                                          avatar: Icon(
+                                            trip['status'] == 'active'
+                                                ? Icons.check_circle
+                                                : Icons.history,
+                                            size: 18,
+                                            color: Colors.white,
+                                          ),
+                                          label: Text(
+                                            trip['status']
+                                                .toString()
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          backgroundColor:
+                                              trip['status'] == 'active'
+                                              ? Colors.green
+                                              : Colors.grey,
                                         ),
                                     ],
                                   ),

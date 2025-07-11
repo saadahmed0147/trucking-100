@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fuel_route/Screens/Home/Trip/calculator_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
+import 'package:fuel_route/Utils/app_colors.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -269,113 +270,133 @@ class _AddNewTripState extends State<AddNewTrip> {
                 child: SingleChildScrollView(
                   controller: scrollController,
                   padding: const EdgeInsets.all(16),
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1,
+                  child: Column(
+                    children: [
+                      Text(
+                        "Find Places on Route",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
-                    itemCount: poiCategories.length,
-                    itemBuilder: (context, index) {
-                      final cat = poiCategories[index];
-                      final catKey = cleanLabel(cat['label']);
-                      final isSelected = selectedCategories.contains(catKey);
-
-                      return GestureDetector(
-                        onTap: () async {
+                      ),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 1,
+                            ),
+                        itemCount: poiCategories.length,
+                        itemBuilder: (context, index) {
+                          final cat = poiCategories[index];
+                          final catKey = cleanLabel(cat['label']);
                           final isSelected = selectedCategories.contains(
                             catKey,
                           );
-                          setState(() {
-                            if (isSelected) {
-                              selectedCategories.remove(catKey);
-                              markers.removeWhere(
-                                (m) => m.markerId.value.startsWith(
-                                  "poi_${catKey}_",
-                                ),
+
+                          return GestureDetector(
+                            onTap: () async {
+                              final isSelected = selectedCategories.contains(
+                                catKey,
                               );
-                            } else {
-                              selectedCategories.add(catKey);
-                            }
-                          });
+                              setState(() {
+                                // Only allow one active category at a time
+                                selectedCategories.clear();
+                                if (!isSelected) {
+                                  selectedCategories.add(catKey);
+                                }
+                              });
 
-                          if (!isSelected) {
-                            // Always use the correct reference location
-                            await fetchNearbyPlaces(
-                              category: cat,
-                              origin: origin,
-                              destination: destination,
-                              currentLocation: currentLocation,
-                              apiKey: apiKey,
-                              markers: markers,
-                              onMarkersUpdated: (updatedMarkers) {
-                                setState(() {
-                                  markers = updatedMarkers;
-                                });
-                              },
-                            );
-                          }
-                        },
+                              // Always clear all POI markers before showing new ones
+                              Set<Marker> newCategoryMarkers = {};
+                              if (selectedCategories.isNotEmpty) {
+                                final activeCatKey = selectedCategories.first;
+                                final activeCat = poiCategories.firstWhere(
+                                  (c) => cleanLabel(c['label']) == activeCatKey,
+                                );
+                                await fetchNearbyPlaces(
+                                  category: activeCat,
+                                  origin: origin,
+                                  destination: destination,
+                                  currentLocation: currentLocation,
+                                  apiKey: apiKey,
+                                  markers: newCategoryMarkers,
+                                  onMarkersUpdated: (_) {},
+                                  routePolyline:
+                                      (origin != null &&
+                                          destination != null &&
+                                          polylineCoordinates.isNotEmpty)
+                                      ? polylineCoordinates
+                                      : null,
+                                );
+                              }
+                              // Remove all previous POI markers
+                              markers.removeWhere(
+                                (m) => m.markerId.value.startsWith("poi_"),
+                              );
+                              // Add only the new markers for the active category
+                              setState(() {
+                                markers.addAll(newCategoryMarkers);
+                              });
+                            },
 
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
 
-                          decoration: BoxDecoration(
-                            gradient: isSelected
-                                ? const LinearGradient(
-                                    colors: [Colors.blue, Colors.blueAccent],
-                                  )
-                                : null,
-                            color: isSelected ? null : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.blueAccent),
-                            boxShadow: isSelected
-                                ? [
-                                    const BoxShadow(
-                                      color: Colors.blueAccent,
-                                      blurRadius: 5,
-                                      offset: Offset(0, 2),
+                              decoration: BoxDecoration(
+                                gradient: isSelected
+                                    ? const LinearGradient(
+                                        colors: [
+                                          Colors.blue,
+                                          Colors.blueAccent,
+                                        ],
+                                      )
+                                    : null,
+                                color: isSelected ? null : Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Colors.blueAccent),
+                                boxShadow: isSelected
+                                    ? [
+                                        const BoxShadow(
+                                          color: Colors.blueAccent,
+                                          blurRadius: 5,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              child: Center(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      cat["icon"],
+                                      color: AppColors.splashBgColor,
+                                      size: 35,
                                     ),
-                                  ]
-                                : [],
-                          ),
-                          child: Center(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  cat['icon'],
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 25,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Colors.blue,
-                                  ),
+                                    Text(
+                                      cat['label'],
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : Colors.blue,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  cat['label'],
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : Colors.blue,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    },
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
               );

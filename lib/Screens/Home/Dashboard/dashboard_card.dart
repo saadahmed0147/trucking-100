@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/main.dart';
 
 class DashboardCard extends StatelessWidget {
@@ -17,8 +18,7 @@ class DashboardCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final padding = mq.width * 0.03;
     final titleFontSize = mq.width * 0.035;
-    final numberFontSize = mq.width * 0.055;
-    final iconSize = mq.width * 0.06;
+    final numberFontSize = mq.width * 0.053;
 
     return Container(
       padding: EdgeInsets.all(padding),
@@ -33,31 +33,46 @@ class DashboardCard extends StatelessWidget {
         children: [
           /// Top Row: Texts + Icon
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: titleFontSize,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Flexible(
+                flex: 4,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: titleFontSize,
+                        fontWeight: FontWeight.w600,
+
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    /// Bottom number
+                    Text(
+                      number,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: numberFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Icon(icon, size: iconSize, color: Colors.lightBlueAccent),
+              Flexible(
+                flex: 2,
+                child: Icon(icon, size: 40, color: AppColors.darkBlueColor),
+              ),
             ],
-          ),
-
-          /// Bottom number
-          Text(
-            number,
-            style: TextStyle(
-              fontSize: numberFontSize,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
           ),
         ],
       ),

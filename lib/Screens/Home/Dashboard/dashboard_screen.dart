@@ -19,10 +19,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late Future<List<Map<String, String>>> _tripsFuture;
   Future<List<Map<String, String>>>? _cachedTripsFuture;
 
+  double totalEstimatedFuel = 0;
+  int totalTrips = 0;
+  double totalDistance = 0;
+
   @override
   void initState() {
     super.initState();
     _tripsFuture = _cachedTripsFuture ??= TripService.fetchTripsFromFirebase();
+    fetchDashboardStats();
+  }
+
+  /// Fetch dashboard stats from Firebase
+  Future<void> fetchDashboardStats() async {
+    final ref = FirebaseDatabase.instance.ref("trips");
+    final snapshot = await ref.get();
+
+    if (!snapshot.exists) return;
+
+    double fuel = 0;
+    double distance = 0;
+    int tripCount = 0;
+
+    final data = snapshot.value as Map;
+    data.forEach((key, value) {
+      final trip = Map<String, dynamic>.from(value);
+
+      tripCount++;
+      fuel += (trip['estimatedFuel'] as num?)?.toDouble() ?? 0;
+      distance += (trip['distanceMiles'] as num?)?.toDouble() ?? 0;
+    });
+
+    setState(() {
+      totalTrips = tripCount;
+      totalEstimatedFuel = fuel;
+      totalDistance = distance;
+    });
   }
 
   /// 🔍 Check if the user already has an active trip
@@ -51,21 +83,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.tabsBgColor,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: AppColors.splashBgColor,
-        title: const Text(
-          "TRUCKING 100",
-          style: TextStyle(
-            color: AppColors.whiteColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Image.asset('assets/images/logo.png'),
-        ),
-      ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
         child: Column(
@@ -129,7 +147,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             GridView(
-              padding: const EdgeInsets.all(16),
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -138,25 +155,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.6,
               ),
-              children: const [
+              children: [
                 DashboardCard(
-                  title: 'EST. Fuel',
-                  number: '\$24,580',
+                  title: 'Fuel Used',
+                  number: '${totalEstimatedFuel.toStringAsFixed(2)} gallons',
                   icon: Icons.local_gas_station,
                 ),
                 DashboardCard(
                   title: 'Avg. MPG',
-                  number: '7.2',
+                  number: totalEstimatedFuel == 0 || totalDistance == 0
+                      ? '0.0'
+                      : (totalDistance / totalEstimatedFuel).toStringAsFixed(1),
                   icon: Icons.speed,
                 ),
                 DashboardCard(
-                  title: 'Total Trip',
-                  number: '12',
+                  title: 'Total Trips',
+                  number: totalTrips.toString(),
                   icon: Icons.route,
                 ),
                 DashboardCard(
                   title: 'Travel Distance',
-                  number: '850 mi',
+                  number: '${totalDistance.toStringAsFixed(0)} miles',
                   icon: Icons.map,
                 ),
               ],
@@ -203,7 +222,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   );
                 }
 
-                final limitedTrips = snapshot.data!.take(3).toList();
+                final trips = snapshot.data!;
+                // Active trips first, then others (latest first)
+                trips.sort((a, b) {
+                  if (a['status'] == 'ACTIVE' && b['status'] != 'ACTIVE')
+                    return -1;
+                  if (a['status'] != 'ACTIVE' && b['status'] == 'ACTIVE')
+                    return 1;
+                  return 0;
+                });
+                final limitedTrips = trips.take(3).toList();
                 return RecentTripList(trips: limitedTrips);
               },
             ),

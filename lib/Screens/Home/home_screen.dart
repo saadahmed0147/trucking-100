@@ -1,52 +1,55 @@
 import 'package:flutter/material.dart';
-import 'package:fuel_route/Screens/Home/Dashboard/dashboard_screen.dart';
-import 'package:fuel_route/Screens/Home/Trip/tabbar.dart';
+ import 'package:fuel_route/Screens/Home/Dashboard/dashboard_screen.dart';
+import 'package:fuel_route/Screens/Home/Trip/trip_planner_screen.dart';
+import 'package:fuel_route/Screens/Home/history_dashboard_screen.dart';
+import 'package:fuel_route/Screens/Home/settings.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialIndex;
+
+  const HomeScreen({super.key, this.initialIndex = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0; // Trip Planner is initially selected
+  late int _selectedIndex; // Trip Planner is initially selected
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex; // ✅ This line is REQUIRED!
+  }
 
   final List<String> _titles = [
     "Dashboard",
     "Trip",
-    "Accounts",
     "History",
     "AI Tips",
+    "Settings",
   ];
 
   final List<String> _iconPaths = [
-    "assets/images/bottom-bar-icon/dashboard-icon.png", // Dashboard
-    "assets/images/bottom-bar-icon/trip-icon.png", // Trip
-    "assets/images/bottom-bar-icon/account-icon.png", // CRM
-    "assets/images/bottom-bar-icon/history-icon.png", // Expenses
-    "assets/images/bottom-bar-icon/ai-icon.png", // AI Tips
+    "assets/images/bottom-bar-icon/dashboard-icon.png",
+    "assets/images/bottom-bar-icon/trip-icon.png",
+    "assets/images/bottom-bar-icon/history-icon.png",
+    "assets/images/bottom-bar-icon/ai-icon.png",
+    "assets/images/bottom-bar-icon/setting-icon.png",
   ];
 
   final List<Widget> _screens = [
     DashboardScreen(),
-    Tabbar(),
-    Center(
-      child: Text("CRM", style: TextStyle(color: Colors.white, fontSize: 20)),
-    ),
+    TripPlannerScreen(),
+    HistoryDashboardScreen(),
     Center(
       child: Text(
-        "Expenses",
-        style: TextStyle(color: Colors.white, fontSize: 20),
+        "Ai tips",
+        style: TextStyle(color: Colors.black, fontSize: 20),
       ),
     ),
-    Center(
-      child: Text(
-        "AI Tips",
-        style: TextStyle(color: Colors.white, fontSize: 20),
-      ),
-    ),
+    SettingsScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -58,20 +61,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   backgroundColor: AppColors.whiteColor,
-      //   automaticallyImplyLeading: false,
-      //   foregroundColor: AppColors.blackColor,
-      //   actions: [
-      //     IconButton(
-      //       onPressed: () async {
-      //         await FirebaseAuth.instance.signOut();
-      //         Navigator.pushReplacementNamed(context, RouteNames.loginScreen);
-      //       },
-      //       icon: Icon(Icons.logout),
-      //     ),
-      //   ],
-      // ),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: AppColors.splashBgColor,
+        title: const Text(
+          "TRUCKING 100",
+          style: TextStyle(
+            color: AppColors.whiteColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Image.asset('assets/images/logo.png'),
+        ),
+      ),
       backgroundColor: AppColors.whiteColor,
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(

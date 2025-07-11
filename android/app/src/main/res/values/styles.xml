@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FuelRoute AI Pro</string>
+    <string name="app_name">Trucking 100</string>
     <string name="facebook_app_id">1463657371317495</string>
     <string name="fb_login_protocol_scheme">fb1463657371317495</string>
     <string name="facebook_client_token">1fb72143cfcb2928d66b29d6dc4bf6f6</string> <!-- 🔴 Add this line -->

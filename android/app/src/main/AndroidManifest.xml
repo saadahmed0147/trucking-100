@@ -10,7 +10,7 @@
 
 
     <application
-        android:label="FuelRoute AI Pro"
+        android:label="Trucking 100"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

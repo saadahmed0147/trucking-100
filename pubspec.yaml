@@ -43,7 +43,7 @@ dependencies:
   firebase_database: ^11.3.9
   firebase_messaging: ^15.2.9
   font_awesome_flutter: ^10.8.0
-  flutter_facebook_auth: ^6.0.3
+  # flutter_facebook_auth: ^6.0.3
   flutter_launcher_icons: ^0.14.4
   geolocator: ^14.0.2
   permission_handler: ^12.0.1
@@ -52,6 +52,7 @@ dependencies:
   geocoding: ^4.0.0
   flutter_polyline_points: ^2.1.0
   intl: ^0.20.2
+  lucide_icons: ^0.257.0
 
 dev_dependencies:
   flutter_test:
@@ -92,6 +93,7 @@ flutter:
     - assets/images/bottom-bar-icon/dashboard-icon.png
     - assets/images/bottom-bar-icon/history-icon.png
     - assets/images/bottom-bar-icon/trip-icon.png
+    - assets/images/bottom-bar-icon/setting-icon.png
 
   #   - images/a_dot_ham.jpeg
 

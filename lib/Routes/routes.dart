@@ -4,11 +4,10 @@ import 'package:fuel_route/Screens/Auth/forgot_pass_screen.dart';
 import 'package:fuel_route/Screens/Auth/login_screen.dart';
 import 'package:fuel_route/Screens/Auth/signup_screen.dart';
 import 'package:fuel_route/Screens/Home/Dashboard/dashboard_screen.dart';
-import 'package:fuel_route/Screens/Home/Trip/history_dashboard_screen.dart';
+import 'package:fuel_route/Screens/Home/history_dashboard_screen.dart';
 import 'package:fuel_route/Screens/Home/Trip/trip_planner_screen.dart';
 import 'package:fuel_route/Screens/Home/ask_location_screen.dart';
 import 'package:fuel_route/Screens/Home/home_screen.dart';
-import 'package:fuel_route/Screens/Home/map_screen.dart';
 import 'package:fuel_route/Screens/Payment/payment_screen.dart';
 import 'package:fuel_route/Screens/Splash/find_places_screen.dart';
 import 'package:fuel_route/Screens/Splash/get_updated_screen.dart';
@@ -60,7 +59,7 @@ class Routes {
       case RouteNames.homeScreen:
         return MaterialPageRoute(builder: (context) => const HomeScreen());
       case RouteNames.mapScreen:
-        return MaterialPageRoute(builder: (context) => const MapScreen());
+      // return MaterialPageRoute(builder: (context) => const MapScreen());
 
       //dashboard
       case RouteNames.dashboardScreen:

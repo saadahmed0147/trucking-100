@@ -2,8 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:fuel_route/Routes/route_names.dart';
 import 'package:fuel_route/Routes/routes.dart';
-import 'package:fuel_route/Screens/Home/Trip/add_new_trip.dart';
-import 'package:fuel_route/firebase_options.dart';
+ import 'package:fuel_route/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

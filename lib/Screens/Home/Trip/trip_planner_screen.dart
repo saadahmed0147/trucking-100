@@ -3,7 +3,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/add_new_trip.dart';
-import 'package:fuel_route/Screens/Home/map_screen.dart';
+import 'package:fuel_route/Screens/Home/Trip/map_screen.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 
 class TripPlannerScreen extends StatefulWidget {

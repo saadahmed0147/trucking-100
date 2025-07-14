@@ -34,6 +34,37 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
+  // Google polyline decoder
+  List<LatLng> decodePolyline(String polyline) {
+    List<LatLng> points = [];
+    int index = 0, len = polyline.length;
+    int lat = 0, lng = 0;
+
+    while (index < len) {
+      int b, shift = 0, result = 0;
+      do {
+        b = polyline.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = polyline.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+      lng += dlng;
+
+      points.add(LatLng(lat / 1E5, lng / 1E5));
+    }
+    return points;
+  }
+
   final Completer<GoogleMapController> _controller = Completer();
   final TextEditingController _pickupController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
@@ -131,14 +162,24 @@ class _MapScreenState extends State<MapScreen> {
       );
       return;
     }
-    final newPolylines = await DirectionsService.getDirections(
-      origin: origin!,
-      destination: destination!,
-      apiKey: apiKey,
-      polylineCoordinates: polylineCoordinates,
-    );
+    // Decode all step polylines for accurate route
+    final route = data['routes'][0];
+    for (var leg in route['legs']) {
+      for (var step in leg['steps']) {
+        String encodedPolyline = step['polyline']['points'];
+        List<LatLng> stepPoints = decodePolyline(encodedPolyline);
+        polylineCoordinates.addAll(stepPoints);
+      }
+    }
     setState(() {
-      polylines.addAll(newPolylines);
+      polylines.add(
+        Polyline(
+          polylineId: const PolylineId('route'),
+          color: Colors.blueAccent,
+          width: 5,
+          points: polylineCoordinates,
+        ),
+      );
     });
   }
 
@@ -293,26 +334,32 @@ class _MapScreenState extends State<MapScreen> {
                             catKey,
                           );
 
-                          return GestureDetector(
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(20),
                             onTap: () async {
                               final isSelected = selectedCategories.contains(
                                 catKey,
                               );
+                              // Instantly update selection for fast UI feedback
                               setState(() {
-                                // Only allow one active category at a time
                                 selectedCategories.clear();
                                 if (!isSelected) {
                                   selectedCategories.add(catKey);
                                 }
                               });
-
-                              // Always clear all POI markers before showing new ones
-                              Set<Marker> newCategoryMarkers = {};
-                              if (selectedCategories.isNotEmpty) {
-                                final activeCatKey = selectedCategories.first;
-                                final activeCat = poiCategories.firstWhere(
-                                  (c) => cleanLabel(c['label']) == activeCatKey,
+                              // Remove all previous POI markers instantly
+                              setState(() {
+                                markers.removeWhere(
+                                  (m) => m.markerId.value.startsWith("poi_"),
                                 );
+                              });
+                              // Fetch and add new markers only if selected
+                              if (!isSelected) {
+                                Set<Marker> newCategoryMarkers = {};
+                                final activeCat = poiCategories.firstWhere(
+                                  (c) => cleanLabel(c['label']) == catKey,
+                                );
+                                // Always use routePolyline for POI search between both locations
                                 await fetchNearbyPlaces(
                                   category: activeCat,
                                   origin: origin,
@@ -321,27 +368,17 @@ class _MapScreenState extends State<MapScreen> {
                                   apiKey: apiKey,
                                   markers: newCategoryMarkers,
                                   onMarkersUpdated: (_) {},
-                                  routePolyline:
-                                      (origin != null &&
-                                          destination != null &&
-                                          polylineCoordinates.isNotEmpty)
+                                  routePolyline: polylineCoordinates.isNotEmpty
                                       ? polylineCoordinates
                                       : null,
                                 );
+                                setState(() {
+                                  markers.addAll(newCategoryMarkers);
+                                });
                               }
-                              // Remove all previous POI markers
-                              markers.removeWhere(
-                                (m) => m.markerId.value.startsWith("poi_"),
-                              );
-                              // Add only the new markers for the active category
-                              setState(() {
-                                markers.addAll(newCategoryMarkers);
-                              });
                             },
-
                             child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-
+                              duration: const Duration(milliseconds: 100),
                               decoration: BoxDecoration(
                                 gradient: isSelected
                                     ? const LinearGradient(

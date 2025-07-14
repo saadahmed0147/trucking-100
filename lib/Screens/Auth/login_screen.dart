@@ -50,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // if (!mounted) return;
 
           // if (hasLocation) {
-          Navigator.pushReplacementNamed(context, RouteNames.homeScreen);
+          // Navigator.pushReplacementNamed(context, RouteNames.homeScreen);
           // } else {
           //   Navigator.pushReplacementNamed(
           //     context,

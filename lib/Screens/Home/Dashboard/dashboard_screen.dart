@@ -5,6 +5,7 @@ import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Dashboard/dashboard_card.dart';
 import 'package:fuel_route/Screens/Home/Dashboard/recent_trip_list.dart';
 import 'package:fuel_route/Screens/Home/Trip/add_new_trip.dart';
+import 'package:fuel_route/Screens/Home/home_screen.dart';
 import 'package:fuel_route/Services/trip_service.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 
@@ -32,6 +33,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// Fetch dashboard stats from Firebase
   Future<void> fetchDashboardStats() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     final ref = FirebaseDatabase.instance.ref("trips");
     final snapshot = await ref.get();
 
@@ -44,10 +48,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final data = snapshot.value as Map;
     data.forEach((key, value) {
       final trip = Map<String, dynamic>.from(value);
-
-      tripCount++;
-      fuel += (trip['estimatedFuel'] as num?)?.toDouble() ?? 0;
-      distance += (trip['distanceMiles'] as num?)?.toDouble() ?? 0;
+      if (trip['userEmail'] == user.email) {
+        tripCount++;
+        fuel += (trip['estimatedFuel'] as num?)?.toDouble() ?? 0;
+        distance += (trip['distanceMiles'] as num?)?.toDouble() ?? 0;
+      }
     });
 
     setState(() {
@@ -186,7 +191,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 title: "Ai Trip Narration",
                 fontSize: 17,
                 borderRadius: 30,
-                onPress: () {},
+                onPress: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const HomeScreen(initialIndex: 3),
+                    ),
+                  );
+                },
               ),
             ),
             Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
- import 'package:fuel_route/Screens/Home/Dashboard/dashboard_screen.dart';
+import 'package:fuel_route/Screens/Home/Dashboard/dashboard_screen.dart';
 import 'package:fuel_route/Screens/Home/Trip/trip_planner_screen.dart';
+import 'package:fuel_route/Screens/Home/ai_tips_screen.dart';
 import 'package:fuel_route/Screens/Home/history_dashboard_screen.dart';
 import 'package:fuel_route/Screens/Home/settings.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
@@ -43,12 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     DashboardScreen(),
     TripPlannerScreen(),
     HistoryDashboardScreen(),
-    Center(
-      child: Text(
-        "Ai tips",
-        style: TextStyle(color: Colors.black, fontSize: 20),
-      ),
-    ),
+    AiTipsScreen(),
     SettingsScreen(),
   ];
 

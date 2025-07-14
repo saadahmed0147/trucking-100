@@ -269,7 +269,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.only(right: 20, bottom: 20),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton.icon(
               icon: const Icon(Icons.logout, color: Colors.white),

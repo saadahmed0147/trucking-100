@@ -110,7 +110,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
   }
 
+  bool isAddingTrip = false;
+  bool tripAdded = false; // Track if trip is already added
+
   void handleAddTrip() async {
+    if (isAddingTrip) return; // Prevent double tap
+
+    if (tripAdded) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Trip already added!")));
+      return;
+    }
+
     if (distanceMiles == null ||
         estimatedFuel == null ||
         fuelCost == null ||
@@ -121,9 +133,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       return;
     }
 
-    final ref = FirebaseDatabase.instance
-        .ref("trips")
-        .push(); // push() creates a unique trip ID
+    setState(() => isAddingTrip = true);
+
+    final ref = FirebaseDatabase.instance.ref("trips").push();
 
     await ref.set({
       "pickup": widget.pickup,
@@ -139,8 +151,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       "estimatedFuel": estimatedFuel,
       "fuelCost": fuelCost,
       "duration": duration,
-      "status": "active", // ✅ Trip is added with status "active"
+      "status": "active",
       "createdAt": DateTime.now().toIso8601String(),
+    });
+
+    setState(() {
+      isAddingTrip = false;
+      tripAdded = true;
     });
 
     showDialog(

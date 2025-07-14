@@ -87,8 +87,13 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      canPop: true,
       child: Scaffold(
+        appBar: AppBar(
+          automaticallyImplyLeading: true,
+          foregroundColor: AppColors.whiteColor,
+          backgroundColor: AppColors.splashBgColor,
+        ),
         backgroundColor: AppColors.splashBgColor,
         body: Center(
           child: SingleChildScrollView(
@@ -99,7 +104,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   SizedBox(
-                    height: mq.height * 0.18,
+                    height: mq.height * 0.16,
 
                     child: Image.asset(
                       "assets/images/logo.png",
@@ -249,7 +254,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         RoundButton(
                           titleColor: AppColors.lightBlueColor,
                           bgColor: AppColors.whiteColor,
-                          leadingIcon: FontAwesomeIcons.squareFacebook,
+                          leadingIcon: FontAwesomeIcons.google,
                           loading: _googleSigninLoading,
                           borderRadius: 30,
                           title: 'Sign up with Google',

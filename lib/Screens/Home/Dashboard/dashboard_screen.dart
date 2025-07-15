@@ -23,15 +23,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double totalEstimatedFuel = 0;
   int totalTrips = 0;
   double totalDistance = 0;
+  String firstName = 'Driver'; // Default fallback
 
   @override
   void initState() {
     super.initState();
     _tripsFuture = _cachedTripsFuture ??= TripService.fetchTripsFromFirebase();
     fetchDashboardStats();
+    fetchFirstName(); // 🧠 Get user name
   }
 
-  /// Fetch dashboard stats from Firebase
+  /// 🔍 Fetch user first name from FirebaseAuth
+  Future<void> fetchFirstName() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final displayName = user.displayName ?? 'Driver';
+      setState(() {
+        firstName = displayName.split(' ').first;
+      });
+    }
+  }
+
+  /// 📊 Dashboard Stats
   Future<void> fetchDashboardStats() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -62,7 +75,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  /// 🔍 Check if the user already has an active trip
+  /// 🟢 Active trip check
   Future<bool> hasActiveTrip() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return false;
@@ -88,13 +101,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.tabsBgColor,
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               "Dashboard",
               style: TextStyle(
                 fontSize: 25,
@@ -105,8 +117,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Padding(
               padding: const EdgeInsets.only(right: 20),
               child: Text(
-                "Welcome Back, john! Here’s your trucking overview",
-                style: TextStyle(
+                "Welcome, $firstName! Here’s your trucking overview",
+                style: const TextStyle(
                   fontSize: 15,
                   color: AppColors.blackColor,
                   fontWeight: FontWeight.normal,
@@ -123,7 +135,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 borderRadius: 30,
                 onPress: () async {
                   final activeTrip = await hasActiveTrip();
-
                   if (activeTrip) {
                     showDialog(
                       context: context,
@@ -201,7 +212,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
             ),
-            Text(
+            const Text(
               "Recent Trips",
               style: TextStyle(
                 fontSize: 22,
@@ -235,7 +246,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 }
 
                 final trips = snapshot.data!;
-                // Active trips first, then others (latest first)
                 trips.sort((a, b) {
                   if (a['status'] == 'ACTIVE' && b['status'] != 'ACTIVE')
                     return -1;
@@ -243,6 +253,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return 1;
                   return 0;
                 });
+
                 final limitedTrips = trips.take(3).toList();
                 return RecentTripList(trips: limitedTrips);
               },

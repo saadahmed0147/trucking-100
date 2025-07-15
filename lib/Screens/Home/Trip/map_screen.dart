@@ -34,36 +34,8 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  // Google polyline decoder
-  List<LatLng> decodePolyline(String polyline) {
-    List<LatLng> points = [];
-    int index = 0, len = polyline.length;
-    int lat = 0, lng = 0;
-
-    while (index < len) {
-      int b, shift = 0, result = 0;
-      do {
-        b = polyline.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lat += dlat;
-
-      shift = 0;
-      result = 0;
-      do {
-        b = polyline.codeUnitAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
-      lng += dlng;
-
-      points.add(LatLng(lat / 1E5, lng / 1E5));
-    }
-    return points;
-  }
+  String? loadingCategory;
+  bool isLoading = false;
 
   final Completer<GoogleMapController> _controller = Completer();
   final TextEditingController _pickupController = TextEditingController();
@@ -127,7 +99,7 @@ class _MapScreenState extends State<MapScreen> {
           Marker(
             markerId: const MarkerId('pickup'),
             position: currentLocation!,
-            infoWindow: const InfoWindow(title: 'Pickup (Live)'),
+            infoWindow: const InfoWindow(title: 'Pickup (Your Location)'),
           ),
         );
       });
@@ -162,24 +134,14 @@ class _MapScreenState extends State<MapScreen> {
       );
       return;
     }
-    // Decode all step polylines for accurate route
-    final route = data['routes'][0];
-    for (var leg in route['legs']) {
-      for (var step in leg['steps']) {
-        String encodedPolyline = step['polyline']['points'];
-        List<LatLng> stepPoints = decodePolyline(encodedPolyline);
-        polylineCoordinates.addAll(stepPoints);
-      }
-    }
+    final newPolylines = await DirectionsService.getDirections(
+      origin: origin!,
+      destination: destination!,
+      apiKey: apiKey,
+      polylineCoordinates: polylineCoordinates,
+    );
     setState(() {
-      polylines.add(
-        Polyline(
-          polylineId: const PolylineId('route'),
-          color: Colors.blueAccent,
-          width: 5,
-          points: polylineCoordinates,
-        ),
-      );
+      polylines.addAll(newPolylines);
     });
   }
 
@@ -334,51 +296,68 @@ class _MapScreenState extends State<MapScreen> {
                             catKey,
                           );
 
-                          return InkWell(
-                            borderRadius: BorderRadius.circular(20),
+                          return GestureDetector(
                             onTap: () async {
                               final isSelected = selectedCategories.contains(
                                 catKey,
                               );
-                              // Instantly update selection for fast UI feedback
+
+                              // Ignore if it's already loading the same category
+                              if (loadingCategory == catKey && isLoading)
+                                return;
+
                               setState(() {
                                 selectedCategories.clear();
-                                if (!isSelected) {
-                                  selectedCategories.add(catKey);
+                                if (!isSelected) selectedCategories.add(catKey);
+                                loadingCategory = catKey;
+                                isLoading = true;
+                              });
+
+                              // Clear existing POI markers
+                              markers.removeWhere(
+                                (m) => m.markerId.value.startsWith("poi_"),
+                              );
+                              Set<Marker> newCategoryMarkers = {};
+
+                              try {
+                                if (selectedCategories.isNotEmpty) {
+                                  final activeCat = poiCategories.firstWhere(
+                                    (c) => cleanLabel(c['label']) == catKey,
+                                  );
+                                  await fetchNearbyPlaces(
+                                    category: activeCat,
+                                    origin: origin,
+                                    destination: destination,
+                                    currentLocation: currentLocation,
+                                    apiKey: apiKey,
+                                    markers: newCategoryMarkers,
+                                    onMarkersUpdated: (_) {},
+                                    routePolyline:
+                                        (origin != null &&
+                                            destination != null &&
+                                            polylineCoordinates.isNotEmpty)
+                                        ? polylineCoordinates
+                                        : null,
+                                  );
                                 }
-                              });
-                              // Remove all previous POI markers instantly
-                              setState(() {
-                                markers.removeWhere(
-                                  (m) => m.markerId.value.startsWith("poi_"),
-                                );
-                              });
-                              // Fetch and add new markers only if selected
-                              if (!isSelected) {
-                                Set<Marker> newCategoryMarkers = {};
-                                final activeCat = poiCategories.firstWhere(
-                                  (c) => cleanLabel(c['label']) == catKey,
-                                );
-                                // Always use routePolyline for POI search between both locations
-                                await fetchNearbyPlaces(
-                                  category: activeCat,
-                                  origin: origin,
-                                  destination: destination,
-                                  currentLocation: currentLocation,
-                                  apiKey: apiKey,
-                                  markers: newCategoryMarkers,
-                                  onMarkersUpdated: (_) {},
-                                  routePolyline: polylineCoordinates.isNotEmpty
-                                      ? polylineCoordinates
-                                      : null,
-                                );
+
+                                // Apply markers
                                 setState(() {
                                   markers.addAll(newCategoryMarkers);
                                 });
+                              } catch (e) {
+                                debugPrint("Error fetching POIs: $e");
+                              } finally {
+                                // Reset loading state
+                                setState(() {
+                                  isLoading = false;
+                                  loadingCategory = null;
+                                });
                               }
                             },
+
                             child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 100),
+                              duration: const Duration(milliseconds: 200),
                               decoration: BoxDecoration(
                                 gradient: isSelected
                                     ? const LinearGradient(
@@ -402,28 +381,42 @@ class _MapScreenState extends State<MapScreen> {
                                     : [],
                               ),
                               child: Center(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      cat["icon"],
-                                      color: AppColors.splashBgColor,
-                                      size: 35,
-                                    ),
-                                    Text(
-                                      cat['label'],
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                        color: isSelected
-                                            ? Colors.white
-                                            : Colors.blue,
+                                child: isLoading && loadingCategory == catKey
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                        ),
+                                      )
+                                    : Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            cat["icon"],
+                                            color: AppColors.splashBgColor,
+                                            size: 35,
+                                          ),
+                                          Text(
+                                            cat['label'],
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : Colors.blue,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
-                                ),
                               ),
                             ),
                           );

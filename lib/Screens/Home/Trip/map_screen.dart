@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:fuel_route/Screens/Home/Trip/navigation_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
@@ -429,6 +430,26 @@ class _MapScreenState extends State<MapScreen> {
             },
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.directions, color: AppColors.whiteColor),
+        backgroundColor: AppColors.lightBlueColor,
+        onPressed: () {
+          // Open navigation screen instantly, pass all required trip data
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => NavigationScreen(
+                tripId: widget.tripId,
+                // Pass pickup/destination for instant display
+                pickupLat: widget.pickupLat,
+                pickupLng: widget.pickupLng,
+                destinationLat: widget.destinationLat,
+                destinationLng: widget.destinationLng,
+              ),
+            ),
+          );
+        },
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(16, 05, 16, 24),

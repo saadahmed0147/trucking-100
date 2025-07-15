@@ -108,7 +108,7 @@ class _AddNewTripState extends State<AddNewTrip> {
     if (input.isEmpty) return;
 
     final url =
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey&components=country:pk';
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey&components=country:us';
 
     final response = await http.get(Uri.parse(url));
     final data = jsonDecode(response.body);

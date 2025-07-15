@@ -47,14 +47,15 @@ class _AddNewTripState extends State<AddNewTrip> {
 
   void getCurrentLocation() async {
     final location = await determinePosition(
-      _controller, // 1. The GoogleMap controller
-      markers, // 2. Existing set of markers
+      _controller,
+      markers,
       (updatedMarkers) {
-        // 3. Callback to update markers
         setState(() {
           markers = updatedMarkers;
         });
       },
+      shouldShowMarker:
+          _pickupController == false || destination == null, // ✅ ONLY IF needed
     );
 
     if (location != null) {
@@ -67,6 +68,11 @@ class _AddNewTripState extends State<AddNewTrip> {
   Future<void> getDirections() async {
     polylines.clear();
     polylineCoordinates.clear();
+
+    // Remove current location marker if both locations are selected
+    if (origin != null && destination != null) {
+      markers.removeWhere((m) => m.markerId.value == 'current_location');
+    }
 
     final url =
         'https://maps.googleapis.com/maps/api/directions/json?origin=${origin!.latitude},${origin!.longitude}&destination=${destination!.latitude},${destination!.longitude}&key=$apiKey';
@@ -102,7 +108,7 @@ class _AddNewTripState extends State<AddNewTrip> {
     if (input.isEmpty) return;
 
     final url =
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey&components=country:us';
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey&components=country:pk';
 
     final response = await http.get(Uri.parse(url));
     final data = jsonDecode(response.body);
@@ -137,15 +143,24 @@ class _AddNewTripState extends State<AddNewTrip> {
       }
 
       if (origin != null && destination != null) {
+        final filteredMarkers = Set<Marker>.from(markers);
+        filteredMarkers.removeWhere(
+          (m) => m.markerId.value == 'current_location',
+        );
+
         updateMarkersAndRoute(
           origin: origin!,
           destination: destination!,
-          markers: markers,
+          markers: filteredMarkers,
           polylines: polylines,
           polylineCoordinates: polylineCoordinates,
           controllerCompleter: _controller,
           apiKey: apiKey,
-          updateUI: () => setState(() {}),
+          updateUI: () {
+            setState(() {
+              markers = filteredMarkers;
+            });
+          },
         );
       }
     });

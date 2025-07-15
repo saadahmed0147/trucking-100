@@ -95,8 +95,9 @@ Future<void> updateMarkersAndRoute({
 Future<LatLng?> determinePosition(
   Completer<GoogleMapController> controllerCompleter,
   Set<Marker> markers,
-  Function(Set<Marker>) updateMarkers,
-) async {
+  Function(Set<Marker>) updateMarkers, {
+  bool shouldShowMarker = true, // NEW PARAMETER
+}) async {
   try {
     LocationPermission permission = await Geolocator.requestPermission();
     Position position = await Geolocator.getCurrentPosition();
@@ -109,10 +110,12 @@ Future<LatLng?> determinePosition(
       ),
     );
 
-    markers.add(
-      Marker(markerId: const MarkerId("current"), position: currentLocation),
-    );
-    updateMarkers(markers);
+    if (shouldShowMarker) {
+      markers.add(
+        Marker(markerId: const MarkerId("current"), position: currentLocation),
+      );
+      updateMarkers(markers); // Only update if marker is added
+    }
 
     return currentLocation;
   } catch (e) {
@@ -241,7 +244,6 @@ class DirectionsService {
   }
 }
 
-// Function to fetch nearby places based on category and location
 Future<void> fetchNearbyPlaces({
   required Map<String, dynamic> category,
   required LatLng? origin,
@@ -250,11 +252,11 @@ Future<void> fetchNearbyPlaces({
   required String apiKey,
   required Set<Marker> markers,
   required Function(Set<Marker>) onMarkersUpdated,
-  List<LatLng>? routePolyline, // NEW: pass polyline points if available
+  List<LatLng>? routePolyline,
 }) async {
   if (currentLocation == null) return;
 
-  // Helper to fetch POIs for a location
+  // Helper to fetch POIs
   Future<List<Map<String, dynamic>>> fetchPOIsForLocation(
     LatLng location,
   ) async {
@@ -270,23 +272,17 @@ Future<void> fetchNearbyPlaces({
     return [];
   }
 
-  // If route is set, sample points along polyline
+  // Sample many points from the polyline (every 10th)
   List<LatLng> samplePoints = [];
   if (origin != null &&
       destination != null &&
       routePolyline != null &&
       routePolyline.isNotEmpty) {
-    // Sample every ~2km or max 10 points
-    int sampleCount = routePolyline.length < 10 ? routePolyline.length : 10;
-    for (int i = 0; i < sampleCount; i++) {
-      int idx = ((routePolyline.length - 1) * i ~/ (sampleCount - 1)).clamp(
-        0,
-        routePolyline.length - 1,
-      );
-      samplePoints.add(routePolyline[idx]);
+    const int step = 10; // adjust step size for density (smaller = more)
+    for (int i = 0; i < routePolyline.length; i += step) {
+      samplePoints.add(routePolyline[i]);
     }
   } else {
-    // Fallback: midpoint or current location
     samplePoints = [
       origin != null && destination != null
           ? LatLng(
@@ -297,10 +293,11 @@ Future<void> fetchNearbyPlaces({
     ];
   }
 
-  // Fetch POIs for all sample points
+  // Fetch POIs from those points
   Set<String> addedCoords = {};
   Set<Marker> newMarkers = {};
   String catKey = cleanLabel(category['label']);
+
   for (LatLng point in samplePoints) {
     List<Map<String, dynamic>> results = await fetchPOIsForLocation(point);
     for (var result in results) {
@@ -323,10 +320,15 @@ Future<void> fetchNearbyPlaces({
         ),
       );
     }
+
+    await Future.delayed(
+      const Duration(milliseconds: 200),
+    ); // to avoid rate limit
   }
-  // Merge with existing markers
+
+  // Merge & update UI
   markers.addAll(newMarkers);
-  onMarkersUpdated(markers); // call callback to trigger UI update
+  onMarkersUpdated(markers);
 }
 
 // Function to get latitude and longitude of a place by its ID

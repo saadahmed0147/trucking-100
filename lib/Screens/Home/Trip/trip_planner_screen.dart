@@ -158,6 +158,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  SizedBox(height: 10),
                   Expanded(
                     child: RefreshIndicator(
                       color: AppColors.lightBlueColor,
@@ -200,22 +201,18 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                 borderRadius: BorderRadius.circular(18),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.blueAccent.withOpacity(0.08),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 6),
+                                    color: Colors.blueAccent,
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
                                   ),
                                 ],
-                                border: Border(
-                                  left: BorderSide(
-                                    color: trip['status'] == 'active'
-                                        ? AppColors.lightBlueColor
-                                        : Colors.deepOrange,
-                                    width: 6,
-                                  ),
+                                border: Border.all(
+                                  width: 2,
+                                  color: AppColors.lightBlueColor,
                                 ),
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.all(18),
+                                padding: const EdgeInsets.all(30),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,16 +222,16 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                         const Icon(
                                           Icons.location_on,
                                           color: Colors.blueAccent,
-                                          size: 28,
+                                          size: 20,
                                         ),
-                                        const SizedBox(width: 8),
+                                        const SizedBox(width: 15),
                                         Expanded(
                                           child: Text(
                                             trip['pickup'] ?? 'Unknown',
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 18,
-                                              color: Colors.black,
+                                              color: AppColors.darkBlueColor,
                                             ),
                                           ),
                                         ),
@@ -246,27 +243,48 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                         const Icon(
                                           Icons.flag,
                                           color: Colors.deepOrange,
-                                          size: 28,
+                                          size: 20,
                                         ),
-                                        const SizedBox(width: 8),
+                                        const SizedBox(width: 15),
                                         Expanded(
                                           child: Text(
                                             trip['destination'] ?? 'Unknown',
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 18,
-                                              color: Colors.black,
+                                              color: AppColors.darkBlueColor,
                                             ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 12),
-                                    Divider(color: Colors.grey[300]),
-                                    const SizedBox(height: 8),
+                                    // const SizedBox(height: 18),
+                                    // Row(
+                                    //   children: [
+                                    //     const Icon(
+                                    //       Icons.access_time,
+                                    //       color: Colors.black,
+                                    //       size: 18,
+                                    //     ),
+                                    //     const SizedBox(width: 15),
+                                    //     Expanded(
+                                    //       child: Text(
+                                    //         trip['duration'] ?? 'Unknown',
+                                    //         style: const TextStyle(
+                                    //           fontWeight: FontWeight.bold,
+                                    //           fontSize: 14,
+                                    //           color: AppColors.darkBlueColor,
+                                    //         ),
+                                    //       ),
+                                    //     ),
+                                    //   ],
+                                    // ),
+                                    const SizedBox(height: 30),
+                                    Divider(color: AppColors.darkBlueColor),
+                                    const SizedBox(height: 6),
                                     Wrap(
                                       spacing: 12,
-                                      runSpacing: 8,
+                                      runSpacing: 0,
                                       children: [
                                         if (trip['date'] != null)
                                           Chip(
@@ -283,36 +301,36 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                             ),
                                             backgroundColor: Colors.blueAccent,
                                           ),
-                                        if (trip['category'] != null)
+                                        if (trip['duration'] != null)
                                           Chip(
                                             avatar: const Icon(
-                                              Icons.category,
+                                              Icons.access_time,
                                               size: 18,
                                               color: Colors.white,
                                             ),
                                             label: Text(
-                                              'Category: ${trip['category']}',
+                                              trip['duration'] ?? 'Unknown',
                                               style: const TextStyle(
                                                 color: Colors.white,
                                               ),
                                             ),
                                             backgroundColor: Colors.deepPurple,
                                           ),
-                                        if (trip['mpg'] != null)
-                                          Chip(
-                                            avatar: const Icon(
-                                              Icons.local_gas_station,
-                                              size: 18,
-                                              color: Colors.white,
-                                            ),
-                                            label: Text(
-                                              'MPG: ${trip['mpg']}',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
+                                        // if (trip['mpg'] != null)
+                                        //   Chip(
+                                        //     avatar: const Icon(
+                                        //       Icons.local_gas_station,
+                                        //       size: 18,
+                                        //       color: Colors.white,
+                                        //     ),
+                                        //     label: Text(
+                                        //       'MPG: ${trip['mpg']}',
+                                        //       style: const TextStyle(
+                                        //         color: Colors.white,
+                                        //       ),
+                                        //     ),
+                                        //     backgroundColor: Colors.green,
+                                        //   ),
                                         if (trip['status'] != null)
                                           Chip(
                                             avatar: Icon(

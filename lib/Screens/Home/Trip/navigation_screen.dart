@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -41,6 +40,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   String durationText = '';
   String distanceText = '';
   String arrivalTime = '';
+  String currentInstruction = '';
   bool routeError = false;
 
   final String apiKey = 'AIzaSyDo8HGqkDwHuSuxcWAkHuK7H_gv1ThasBg';
@@ -128,7 +128,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
           });
 
           mapController.animateCamera(CameraUpdate.newLatLng(currentLocation));
-
           await fetchPolyline();
           await fetchRouteInfo();
         });
@@ -202,6 +201,13 @@ class _NavigationScreenState extends State<NavigationScreen> {
       );
       arrivalTime = DateFormat('hh:mm a').format(arrivalTimestamp);
 
+      final steps = leg['steps'] as List;
+      if (steps.isNotEmpty) {
+        final firstStep = steps[0];
+        final htmlInstruction = firstStep['html_instructions'] ?? '';
+        currentInstruction = _parseHtmlInstructions(htmlInstruction);
+      }
+
       markers.add(
         Marker(
           markerId: const MarkerId('end'),
@@ -215,6 +221,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
 
       setState(() {});
     }
+  }
+
+  String _parseHtmlInstructions(String html) {
+    return html.replaceAll(RegExp(r'<[^>]*>'), '');
   }
 
   @override
@@ -241,10 +251,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   myLocationEnabled: true,
                   myLocationButtonEnabled: false,
                   zoomControlsEnabled: false,
+                  compassEnabled: false, // Hide default compass
                 ),
 
                 // ✅ Top Instruction
-                if (!routeError)
+                if (!routeError && currentInstruction.isNotEmpty)
                   Positioned(
                     top: 40,
                     left: 16,
@@ -266,17 +277,17 @@ class _NavigationScreenState extends State<NavigationScreen> {
                         ],
                       ),
                       child: Row(
-                        children: const [
-                          Icon(
-                            Icons.turn_slight_right,
+                        children: [
+                          const Icon(
+                            Icons.straight,
                             color: Colors.white,
                             size: 28,
                           ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Continue straight for 4.2 miles',
-                              style: TextStyle(
+                              currentInstruction,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
@@ -331,13 +342,23 @@ class _NavigationScreenState extends State<NavigationScreen> {
                           }
                         },
                       ),
-                      const SizedBox(height: 12),
-                      // _roundedIconButton(
-                      //   Icons.report_gmailerrorred,
-                      //   onPressed: () {
-                      //     // Handle report
-                      //   },
-                      // ),
+                      const SizedBox(height: 16),
+                      _roundedIconButton(
+                        Icons.explore, // Compass icon
+                        onPressed: () {
+                          if (origin != null) {
+                            mapController.animateCamera(
+                              CameraUpdate.newCameraPosition(
+                                CameraPosition(
+                                  target: origin!,
+                                  zoom: 15.5,
+                                  bearing: 0,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -356,7 +377,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
                       color: Colors.black,
                       borderRadius: BorderRadius.circular(24),
                     ),
-
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

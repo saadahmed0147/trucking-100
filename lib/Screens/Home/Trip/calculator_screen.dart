@@ -162,28 +162,129 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Trip Added!"),
-        content: Text(
-          "Trip from ${widget.pickup} to ${widget.destination} has been added.\n\n"
-          "📍 Distance: ${distanceMiles!.toStringAsFixed(2)} miles\n"
-          "⛽ Fuel Needed: ${estimatedFuel!.toStringAsFixed(2)} gallons\n"
-          "💰 Fuel Cost: \$${fuelCost!.toStringAsFixed(2)}\n"
-          "🕒 Duration: $duration",
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: AppColors.lightBlueColor, width: 1),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const HomeScreen(initialIndex: 1),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Trip Added!",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppColors.darkBlueColor,
                 ),
-              );
-            },
-            child: const Text("OK"),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Trip from ${widget.pickup} to ${widget.destination} has been added",
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 16),
+
+              // Distance
+              Row(
+                children: [
+                  const Icon(Icons.location_on, size: 18, color: Colors.blue),
+                  const SizedBox(width: 6),
+                  Text(
+                    "Distance: ${distanceMiles!.toStringAsFixed(2)} miles",
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Fuel Needed
+              Row(
+                children: [
+                  const Icon(
+                    Icons.local_gas_station,
+                    size: 18,
+                    color: Colors.redAccent,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    "Fuel Needed: ${estimatedFuel!.toStringAsFixed(2)} gallons",
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Fuel Cost
+              Row(
+                children: [
+                  const Icon(
+                    Icons.attach_money,
+                    size: 18,
+                    color: Colors.orange,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    "Fuel Cost: \$${fuelCost!.toStringAsFixed(2)}",
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Duration
+              Row(
+                children: [
+                  const Icon(
+                    Icons.access_time,
+                    size: 18,
+                    color: Colors.blueGrey,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    "Duration: $duration",
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              Align(
+                alignment: Alignment.centerRight,
+                child: SizedBox(
+                  height: 36,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HomeScreen(initialIndex: 1),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.lightBlueColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                    ),
+                    child: const Text(
+                      "OK",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.whiteColor,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -279,7 +380,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   if (isLoading)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.lightBlueColor,
+                        ),
+                      ),
                     )
                   else if (distanceMiles != null &&
                       estimatedFuel != null &&
@@ -287,18 +392,21 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       duration != null)
                     _buildResultSection(),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      onPressed: handleAddTrip,
-                      icon: const Icon(Icons.add),
-                      label: const Text("Add Trip"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.lightBlueColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: handleAddTrip,
+                        icon: const Icon(Icons.add),
+                        label: const Text("Add Trip"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.lightBlueColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
                         ),
                       ),
                     ),
@@ -316,12 +424,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     return TextField(
       readOnly: true,
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.cyan),
+        prefixIcon: Icon(icon, color: Colors.black),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 14,
         ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+        border: OutlineInputBorder(
+          borderSide: BorderSide(width: 2),
+          borderRadius: BorderRadius.circular(30),
+        ),
         hintText: value,
       ),
     );
@@ -344,9 +455,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     required IconData icon,
   }) {
     return InputDecoration(
-      prefixIcon: Icon(icon, color: AppColors.lightBlueColor),
+      prefixIcon: Icon(icon, color: AppColors.blackColor),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+      border: OutlineInputBorder(
+        borderSide: BorderSide(width: 2),
+        borderRadius: BorderRadius.circular(30),
+      ),
       labelText: label,
     );
   }

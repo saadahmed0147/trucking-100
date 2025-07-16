@@ -1,48 +1,82 @@
-import 'package:lucide_icons/lucide_icons.dart';
-
 final List<Map<String, dynamic>> poiCategories = [
-  {'label': 'Fuel', 'icon': LucideIcons.fuel, 'types': 'gas_station'},
-  {
-    'label': 'Convenience',
-    'icon': LucideIcons.shoppingCart,
-    'types': 'convenience_store|store|supermarket',
-  },
-  {'label': 'Truck Stops', 'icon': LucideIcons.truck, 'keyword': 'truck stop'},
-  {
-    'label': 'Food',
-    'icon': LucideIcons.utensils,
-    'types': 'restaurant|food|cafe',
-  },
-  {'label': 'Parking', 'icon': LucideIcons.parkingCircle, 'types': 'parking'},
-  {'label': 'Truck Wash', 'icon': LucideIcons.showerHead, 'types': 'car_wash'},
-  {'label': 'Walmart', 'icon': LucideIcons.store, 'keyword': 'Walmart'},
-  {'label': 'Gym', 'icon': LucideIcons.dumbbell, 'types': 'gym'},
   {
     'label': 'ATM/Bank',
-    'icon': LucideIcons.banknote,
+    'iconPath': 'assets/categories-icons/atm.png',
     'types': 'atm|bank|finance',
   },
   {
-    'label': 'Weigh Station',
-    'icon': LucideIcons.scale,
-    'keyword': 'weigh station',
+    'label': 'Convenience',
+    'iconPath': 'assets/categories-icons/convenience.png',
+    'types': 'convenience_store|store|supermarket',
   },
-  {'label': 'Mechanics', 'icon': LucideIcons.wrench, 'types': 'car_repair'},
-  {
-    'label': 'Medical',
-    'icon': LucideIcons.heartPulse,
-    'types': 'hospital|doctor|pharmacy',
-  },
-  {'label': 'Rest/Hotels', 'icon': LucideIcons.bedDouble, 'types': 'lodging'},
   {
     'label': 'EV Charging',
-    'icon': LucideIcons.batteryCharging,
+    'iconPath': 'assets/categories-icons/ev-charging.png',
     'types': 'electric_vehicle_charging_station',
   },
   {
+    'label': 'Food',
+    'iconPath': 'assets/categories-icons/food.png',
+    'types': 'restaurant|food|cafe',
+  },
+  {
+    'label': 'Fuel',
+    'iconPath': 'assets/categories-icons/fuel.png',
+    'types': 'gas_station',
+  },
+  {
+    'label': 'Gym',
+    'iconPath': 'assets/categories-icons/gym.png',
+    'types': 'gym',
+  },
+  {
+    'label': 'Rest/Hotels',
+    'iconPath': 'assets/categories-icons/hotel.png',
+    'types': 'lodging',
+  },
+  {
+    'label': 'Mechanics',
+    'iconPath': 'assets/categories-icons/mechanic.png',
+    'types': 'car_repair',
+  },
+  {
+    'label': 'Medical',
+    'iconPath': 'assets/categories-icons/medical.png',
+    'types': 'hospital|doctor|pharmacy',
+  },
+  {
+    'label': 'Parking',
+    'iconPath': 'assets/categories-icons/parking.png',
+    'types': 'parking',
+  },
+  {
+    'label': 'Border/Toll',
+    'iconPath': 'assets/categories-icons/tool.png',
+    'keyword': 'toll',
+  },
+  {
+    'label': 'Truck Stops',
+    'iconPath': 'assets/categories-icons/truck.png',
+    'keyword': 'truck stop',
+  },
+  {
+    'label': 'Truck Wash',
+    'iconPath': 'assets/categories-icons/truck-wash.png',
+    'types': 'car_wash',
+  },
+  {
+    'label': 'Walmart',
+    'iconPath': 'assets/categories-icons/walmart.png',
+    'keyword': 'Walmart',
+  },
+  {
     'label': 'Warehouses',
-    'icon': LucideIcons.package,
+    'iconPath': 'assets/categories-icons/warehouse.png',
     'types': 'storage|moving_company',
   },
-  {'label': 'Border/Toll', 'icon': LucideIcons.shieldCheck, 'keyword': 'toll'},
+  {
+    'label': 'Weigh Station',
+    'iconPath': 'assets/categories-icons/weigh-station.png',
+    'keyword': 'weigh station',
+  },
 ];

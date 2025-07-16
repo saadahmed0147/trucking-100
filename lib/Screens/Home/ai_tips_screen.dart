@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AiTipsScreen extends StatefulWidget {
   const AiTipsScreen({super.key});
@@ -18,11 +19,27 @@ class _AiTipsScreenState extends State<AiTipsScreen> {
   @override
   void initState() {
     super.initState();
-    fetchLatestTripAndGenerateTips();
+    loadTipsFromCache();
+  }
+
+  Future<void> loadTipsFromCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cachedTips = prefs.getString('cachedTips');
+
+    if (cachedTips != null) {
+      setState(() {
+        tips = cachedTips;
+        loading = false;
+      });
+    } else {
+      fetchLatestTripAndGenerateTips();
+    }
   }
 
   Future<void> fetchLatestTripAndGenerateTips() async {
+    setState(() => loading = true);
     final user = FirebaseAuth.instance.currentUser;
+
     if (user == null) {
       setState(() {
         tips = "🚫 User not logged in.";
@@ -75,6 +92,10 @@ class _AiTipsScreenState extends State<AiTipsScreen> {
       final latestActiveTrip = activeTrips.first;
 
       final result = await generateTripInsights(latestActiveTrip);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cachedTips', result);
+
       setState(() {
         tips = result;
         loading = false;
@@ -82,9 +103,9 @@ class _AiTipsScreenState extends State<AiTipsScreen> {
     } catch (e) {
       setState(() {
         tips = "❌ Something went wrong. Please try again later.";
-        print("Error fetching tips: $e");
         loading = false;
       });
+      print("Error fetching tips: $e");
     }
   }
 
@@ -120,6 +141,14 @@ Provide useful travel tips, including:
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.tabsBgColor,
+      // floatingActionButton: FloatingActionButton(
+      //   foregroundColor: AppColors.whiteColor,
+      //   backgroundColor: AppColors.lightBlueColor,
+      //   onPressed: () {
+      //     fetchLatestTripAndGenerateTips();
+      //   },
+      //   child: const Icon(Icons.refresh),
+      // ),
       body: Padding(
         padding: const EdgeInsets.all(30),
         child: Column(
@@ -134,8 +163,6 @@ Provide useful travel tips, including:
               ),
             ),
             const SizedBox(height: 16),
-
-            /// AI Tips Card
             Expanded(
               child: loading
                   ? const Center(
@@ -143,80 +170,90 @@ Provide useful travel tips, including:
                         color: AppColors.splashBgColor,
                       ),
                     )
-                  : SingleChildScrollView(
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: tips != null
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: tips!
-                                    .split('\n')
-                                    .where((line) => line.trim().isNotEmpty)
-                                    .map((line) {
-                                      IconData icon = Icons.arrow_right;
-                                      if (line.contains('fuel station') ||
-                                          line.contains('⛽')) {
-                                        icon = Icons.local_gas_station;
-                                      } else if (line.contains('stop') ||
-                                          line.contains('rest')) {
-                                        icon = Icons.hotel;
-                                      } else if (line.contains('warning') ||
-                                          line.contains('⚠️')) {
-                                        icon = Icons.warning_amber_rounded;
-                                      } else if (line.contains('tip') ||
-                                          line.contains('💡')) {
-                                        icon = Icons.lightbulb;
-                                      }
+                  : RefreshIndicator(
+                      color: AppColors.lightBlueColor,
+                      onRefresh: () async {
+                        await fetchLatestTripAndGenerateTips();
+                      },
+                      child: SingleChildScrollView(
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: tips != null
+                              ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: tips!
+                                      .split('\n')
+                                      .where(
+                                        (line) =>
+                                            line.trim().isNotEmpty &&
+                                            !line.trim().startsWith('```'),
+                                      )
+                                      .map((line) {
+                                        IconData icon = Icons.arrow_right;
+                                        if (line.contains('fuel station') ||
+                                            line.contains('⛽')) {
+                                          icon = Icons.local_gas_station;
+                                        } else if (line.contains('stop') ||
+                                            line.contains('rest')) {
+                                          icon = Icons.hotel;
+                                        } else if (line.contains('warning') ||
+                                            line.contains('⚠️')) {
+                                          icon = Icons.warning_amber_rounded;
+                                        } else if (line.contains('tip') ||
+                                            line.contains('💡')) {
+                                          icon = Icons.lightbulb;
+                                        }
 
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 6.0,
-                                        ),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Icon(
-                                              icon,
-                                              color: AppColors.lightBlueColor,
-                                              size: 20,
-                                            ),
-                                            const SizedBox(width: 10),
-                                            Expanded(
-                                              child: Text(
-                                                line
-                                                    .trim()
-                                                    .replaceAll(
-                                                      RegExp(r'^[-•✔️]'),
-                                                      '',
-                                                    )
-                                                    .trim(),
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  color: Colors.black87,
-                                                  height: 1.4,
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 6.0,
+                                          ),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Icon(
+                                                icon,
+                                                color: AppColors.lightBlueColor,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Text(
+                                                  line
+                                                      .trim()
+                                                      .replaceAll(
+                                                        RegExp(r'^[-•✔️]'),
+                                                        '',
+                                                      )
+                                                      .trim(),
+                                                  style: const TextStyle(
+                                                    fontSize: 15,
+                                                    color: Colors.black87,
+                                                    height: 1.4,
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    })
-                                    .toList(),
-                              )
-                            : const Text("No tips available."),
+                                            ],
+                                          ),
+                                        );
+                                      })
+                                      .toList(),
+                                )
+                              : const Text("No tips available."),
+                        ),
                       ),
                     ),
             ),

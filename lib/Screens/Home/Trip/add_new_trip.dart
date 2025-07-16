@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:fuel_route/Screens/Home/Trip/calculator_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
+import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_marker_cache.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -92,15 +94,35 @@ class _AddNewTripState extends State<AddNewTrip> {
       return;
     }
 
-    final newPolylines = await DirectionsService.getDirections(
-      origin: origin!,
-      destination: destination!,
-      apiKey: apiKey,
-      polylineCoordinates: polylineCoordinates,
-    );
+    // final newPolylines = await DirectionsService.getDirections(
+    //   origin: origin!,
+    //   destination: destination!,
+    //   apiKey: apiKey,
+    //   polylineCoordinates: polylineCoordinates,
+    // );
+
+    // --- Use the same detailed polyline logic as navigation_screen.dart ---
+    final PolylinePoints polylinePoints = PolylinePoints();
+    List<LatLng> fullRoute = [];
+    final steps = data['routes'][0]['legs'][0]['steps'];
+
+    for (var step in steps) {
+      final encoded = step['polyline']['points'];
+      final decodedStep = polylinePoints.decodePolyline(encoded);
+      fullRoute.addAll(decodedStep.map((e) => LatLng(e.latitude, e.longitude)));
+    }
 
     setState(() {
-      polylines.addAll(newPolylines);
+      // polylines.addAll(newPolylines);
+      polylineCoordinates = fullRoute;
+      polylines = {
+        Polyline(
+          polylineId: const PolylineId("route"),
+          color: Colors.blue,
+          width: 6,
+          points: polylineCoordinates,
+        ),
+      };
     });
   }
 
@@ -140,30 +162,32 @@ class _AddNewTripState extends State<AddNewTrip> {
       } else {
         destination = selectedLocation;
         _destinationPredictions = [];
-      }
-
-      if (origin != null && destination != null) {
-        final filteredMarkers = Set<Marker>.from(markers);
-        filteredMarkers.removeWhere(
-          (m) => m.markerId.value == 'current_location',
-        );
-
-        updateMarkersAndRoute(
-          origin: origin!,
-          destination: destination!,
-          markers: filteredMarkers,
-          polylines: polylines,
-          polylineCoordinates: polylineCoordinates,
-          controllerCompleter: _controller,
-          apiKey: apiKey,
-          updateUI: () {
-            setState(() {
-              markers = filteredMarkers;
-            });
-          },
+        // Always add destination marker when destination is set
+        markers.removeWhere((m) => m.markerId.value == 'destination');
+        markers.add(
+          Marker(
+            markerId: const MarkerId('destination'),
+            position: destination!,
+            infoWindow: const InfoWindow(title: 'Destination'),
+          ),
         );
       }
     });
+
+    // After both are set, update the route polyline and ensure marker is present
+    if (origin != null && destination != null) {
+      await getDirections();
+      setState(() {
+        markers.removeWhere((m) => m.markerId.value == 'destination');
+        markers.add(
+          Marker(
+            markerId: const MarkerId('destination'),
+            position: destination!,
+            infoWindow: const InfoWindow(title: 'Destination'),
+          ),
+        );
+      });
+    }
   }
 
   LatLng getInitialMapTarget() {
@@ -225,18 +249,10 @@ class _AddNewTripState extends State<AddNewTrip> {
                             origin = currentLocation;
                             _pickupPredictions = [];
                           });
-                          // Optionally update route if destination is set
+                          // Update route if destination is set
                           if (destination != null) {
-                            updateMarkersAndRoute(
-                              origin: origin!,
-                              destination: destination!,
-                              markers: markers,
-                              polylines: polylines,
-                              polylineCoordinates: polylineCoordinates,
-                              controllerCompleter: _controller,
-                              apiKey: apiKey,
-                              updateUI: () => setState(() {}),
-                            );
+                            await getDirections();
+                            setState(() {});
                           }
                         }
                       },
@@ -464,6 +480,45 @@ class _AddNewTripState extends State<AddNewTrip> {
                     ),
                   );
                   return;
+                }
+                Future<void> preloadPOIMarkers({
+                  required LatLng origin,
+                  required LatLng destination,
+                  required List<LatLng> routePolyline,
+                  required String apiKey,
+                }) async {
+                  List<Map<String, dynamic>> poiCategories = [
+                    {"label": "Fuel", "types": "gas_station"},
+                    {"label": "ATM", "types": "atm"},
+                    {"label": "Food", "types": "restaurant"},
+                    {"label": "Convenience", "types": "convenience_store"},
+                    {
+                      "label": "EV Charging",
+                      "types": "electric_vehicle_charging_station",
+                    },
+                    {"label": "Medical", "types": "hospital"},
+                    {"label": "Weigh Station", "keyword": "weigh station"},
+                    {"label": "Warehouses", "keyword": "logistics warehouse"},
+                  ];
+
+                  for (var category in poiCategories) {
+                    Set<Marker> markers = {};
+                    await fetchNearbyPlaces(
+                      category: category,
+                      origin: origin,
+                      destination: destination,
+                      currentLocation: origin,
+                      apiKey: apiKey,
+                      markers: markers,
+                      onMarkersUpdated: (result) {
+                        POIMarkerCache().setMarkers(
+                          cleanLabel(category['label']),
+                          result,
+                        );
+                      },
+                      routePolyline: routePolyline,
+                    );
+                  }
                 }
 
                 // ✅ Proceed to next screen

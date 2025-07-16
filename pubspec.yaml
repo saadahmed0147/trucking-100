@@ -97,6 +97,7 @@ flutter:
     - assets/images/bottom-bar-icon/history-icon.png
     - assets/images/bottom-bar-icon/trip-icon.png
     - assets/images/bottom-bar-icon/setting-icon.png
+    - assets/categories-icons/
 
   #   - images/a_dot_ham.jpeg
 

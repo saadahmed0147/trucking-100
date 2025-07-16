@@ -183,17 +183,17 @@ Widget buildSearchBox({
     margin: const EdgeInsets.only(bottom: 8),
     decoration: BoxDecoration(
       color: Colors.grey[100],
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: Colors.grey.shade300),
+      borderRadius: BorderRadius.circular(30),
+      border: Border.all(color: Colors.black),
     ),
     child: TextField(
       controller: controller,
       onChanged: onChanged,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey.shade600),
-        prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
+        // prefixIcon: const Icon(Icons.search, color: Colors.blueAccent),
         suffixIcon: suffixIcon,
         border: InputBorder.none,
         contentPadding: const EdgeInsets.symmetric(

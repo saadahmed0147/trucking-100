@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:fuel_route/Screens/Home/Trip/navigation_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
@@ -150,14 +151,28 @@ class _MapScreenState extends State<MapScreen> {
       );
       return;
     }
-    final newPolylines = await DirectionsService.getDirections(
-      origin: origin!,
-      destination: destination!,
-      apiKey: apiKey,
-      polylineCoordinates: polylineCoordinates,
-    );
+
+    // --- Use detailed polyline decoding for road-accurate route ---
+    final PolylinePoints polylinePoints = PolylinePoints();
+    List<LatLng> fullRoute = [];
+    final steps = data['routes'][0]['legs'][0]['steps'];
+
+    for (var step in steps) {
+      final encoded = step['polyline']['points'];
+      final decodedStep = polylinePoints.decodePolyline(encoded);
+      fullRoute.addAll(decodedStep.map((e) => LatLng(e.latitude, e.longitude)));
+    }
+
     setState(() {
-      polylines.addAll(newPolylines);
+      polylineCoordinates = fullRoute;
+      polylines = {
+        Polyline(
+          polylineId: const PolylineId("route"),
+          color: Colors.blue,
+          width: 6,
+          points: polylineCoordinates,
+        ),
+      };
     });
   }
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:fuel_route/Screens/Home/Trip/navigation_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
+import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_marker_cache.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -59,6 +60,8 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void initState() {
+    // load all markers on the map
+    loadCachedMarkers();
     super.initState();
     selectedCategories = {};
     _pickupController.text = widget.pickup;
@@ -88,6 +91,18 @@ class _MapScreenState extends State<MapScreen> {
   void dispose() {
     locationStream?.cancel();
     super.dispose();
+  }
+
+  void loadCachedMarkers() {
+    final allMarkers = POIMarkerCache().allMarkers;
+    Set<Marker> combined = {};
+    for (var entry in allMarkers.entries) {
+      combined.addAll(entry.value);
+    }
+
+    setState(() {
+      markers.addAll(combined); // _markers is your local Set<Marker>
+    });
   }
 
   void startLocationUpdates() {

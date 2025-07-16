@@ -159,182 +159,191 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                     ),
                   ),
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: trips.length,
-                      itemBuilder: (context, index) {
-                        final trip = trips[index];
-                        return InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MapScreen(
-                                  pickup: trip['pickup'],
-                                  destination: trip['destination'],
-                                  pickupLat: trip['pickupLat'],
-                                  pickupLng: trip['pickupLng'],
-                                  destinationLat: trip['destinationLat'],
-                                  destinationLng: trip['destinationLng'],
-                                  tripId: trip['id'],
-                                ),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(18),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            margin: const EdgeInsets.symmetric(
-                              vertical: 12,
-                              horizontal: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(18),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.blueAccent.withOpacity(0.08),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                              border: Border(
-                                left: BorderSide(
-                                  color: trip['status'] == 'active'
-                                      ? AppColors.lightBlueColor
-                                      : Colors.deepOrange,
-                                  width: 6,
-                                ),
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(18),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.location_on,
-                                        color: Colors.blueAccent,
-                                        size: 28,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          trip['pickup'] ?? 'Unknown',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                    child: RefreshIndicator(
+                      color: AppColors.lightBlueColor,
+                      onRefresh: () async {
+                        setState(() {
+                          _tripFuture = fetchTrips();
+                        });
+                        await _tripFuture;
+                      },
+                      child: ListView.builder(
+                        itemCount: trips.length,
+                        itemBuilder: (context, index) {
+                          final trip = trips[index];
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MapScreen(
+                                    pickup: trip['pickup'],
+                                    destination: trip['destination'],
+                                    pickupLat: trip['pickupLat'],
+                                    pickupLng: trip['pickupLng'],
+                                    destinationLat: trip['destinationLat'],
+                                    destinationLng: trip['destinationLng'],
+                                    tripId: trip['id'],
                                   ),
-                                  const SizedBox(height: 18),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.flag,
-                                        color: Colors.deepOrange,
-                                        size: 28,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          trip['destination'] ?? 'Unknown',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Divider(color: Colors.grey[300]),
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 12,
-                                    runSpacing: 8,
-                                    children: [
-                                      if (trip['date'] != null)
-                                        Chip(
-                                          avatar: const Icon(
-                                            Icons.calendar_today,
-                                            size: 18,
-                                            color: Colors.white,
-                                          ),
-                                          label: Text(
-                                            'Date: ${trip['date'].toString().substring(0, 10)}',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          backgroundColor: Colors.blueAccent,
-                                        ),
-                                      if (trip['category'] != null)
-                                        Chip(
-                                          avatar: const Icon(
-                                            Icons.category,
-                                            size: 18,
-                                            color: Colors.white,
-                                          ),
-                                          label: Text(
-                                            'Category: ${trip['category']}',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          backgroundColor: Colors.deepPurple,
-                                        ),
-                                      if (trip['mpg'] != null)
-                                        Chip(
-                                          avatar: const Icon(
-                                            Icons.local_gas_station,
-                                            size: 18,
-                                            color: Colors.white,
-                                          ),
-                                          label: Text(
-                                            'MPG: ${trip['mpg']}',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      if (trip['status'] != null)
-                                        Chip(
-                                          avatar: Icon(
-                                            trip['status'] == 'active'
-                                                ? Icons.check_circle
-                                                : Icons.history,
-                                            size: 18,
-                                            color: Colors.white,
-                                          ),
-                                          label: Text(
-                                            trip['status']
-                                                .toString()
-                                                .toUpperCase(),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          backgroundColor:
-                                              trip['status'] == 'active'
-                                              ? Colors.green
-                                              : Colors.grey,
-                                        ),
-                                    ],
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(18),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              margin: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.blueAccent.withOpacity(0.08),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 6),
                                   ),
                                 ],
+                                border: Border(
+                                  left: BorderSide(
+                                    color: trip['status'] == 'active'
+                                        ? AppColors.lightBlueColor
+                                        : Colors.deepOrange,
+                                    width: 6,
+                                  ),
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(18),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.location_on,
+                                          color: Colors.blueAccent,
+                                          size: 28,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            trip['pickup'] ?? 'Unknown',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 18),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.flag,
+                                          color: Colors.deepOrange,
+                                          size: 28,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            trip['destination'] ?? 'Unknown',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Divider(color: Colors.grey[300]),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 12,
+                                      runSpacing: 8,
+                                      children: [
+                                        if (trip['date'] != null)
+                                          Chip(
+                                            avatar: const Icon(
+                                              Icons.calendar_today,
+                                              size: 18,
+                                              color: Colors.white,
+                                            ),
+                                            label: Text(
+                                              'Starting Date: ${trip['date'].toString().substring(0, 10)}',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            backgroundColor: Colors.blueAccent,
+                                          ),
+                                        if (trip['category'] != null)
+                                          Chip(
+                                            avatar: const Icon(
+                                              Icons.category,
+                                              size: 18,
+                                              color: Colors.white,
+                                            ),
+                                            label: Text(
+                                              'Category: ${trip['category']}',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            backgroundColor: Colors.deepPurple,
+                                          ),
+                                        if (trip['mpg'] != null)
+                                          Chip(
+                                            avatar: const Icon(
+                                              Icons.local_gas_station,
+                                              size: 18,
+                                              color: Colors.white,
+                                            ),
+                                            label: Text(
+                                              'MPG: ${trip['mpg']}',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        if (trip['status'] != null)
+                                          Chip(
+                                            avatar: Icon(
+                                              trip['status'] == 'active'
+                                                  ? Icons.check_circle
+                                                  : Icons.history,
+                                              size: 18,
+                                              color: Colors.white,
+                                            ),
+                                            label: Text(
+                                              trip['status']
+                                                  .toString()
+                                                  .toUpperCase(),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            backgroundColor:
+                                                trip['status'] == 'active'
+                                                ? Colors.green
+                                                : Colors.grey,
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ],

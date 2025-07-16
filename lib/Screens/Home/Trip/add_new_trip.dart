@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/calculator_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_marker_cache.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
+import 'package:fuel_route/main.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -52,8 +54,15 @@ class _AddNewTripState extends State<AddNewTrip> {
       _controller,
       markers,
       (updatedMarkers) {
+        // Always filter out current_location marker if both origin and destination are set
+        Set<Marker> filteredMarkers = Set.from(updatedMarkers);
+        if (origin != null && destination != null) {
+          filteredMarkers.removeWhere(
+            (m) => m.markerId.value == 'current_location',
+          );
+        }
         setState(() {
-          markers = updatedMarkers;
+          markers = filteredMarkers;
         });
       },
       shouldShowMarker:
@@ -63,6 +72,10 @@ class _AddNewTripState extends State<AddNewTrip> {
     if (location != null) {
       setState(() {
         currentLocation = location;
+        // Remove current location marker if both locations are set
+        if (origin != null && destination != null) {
+          markers.removeWhere((m) => m.markerId.value == 'current_location');
+        }
       });
     }
   }
@@ -71,10 +84,10 @@ class _AddNewTripState extends State<AddNewTrip> {
     polylines.clear();
     polylineCoordinates.clear();
 
-    // Remove current location marker if both locations are selected
-    if (origin != null && destination != null) {
+    // Always remove current location marker before drawing route
+    setState(() {
       markers.removeWhere((m) => m.markerId.value == 'current_location');
-    }
+    });
 
     final url =
         'https://maps.googleapis.com/maps/api/directions/json?origin=${origin!.latitude},${origin!.longitude}&destination=${destination!.latitude},${destination!.longitude}&key=$apiKey';
@@ -162,23 +175,30 @@ class _AddNewTripState extends State<AddNewTrip> {
       } else {
         destination = selectedLocation;
         _destinationPredictions = [];
-        // Always add destination marker when destination is set
-        markers.removeWhere((m) => m.markerId.value == 'destination');
-        markers.add(
-          Marker(
-            markerId: const MarkerId('destination'),
-            position: destination!,
-            infoWindow: const InfoWindow(title: 'Destination'),
-          ),
-        );
       }
     });
 
-    // After both are set, update the route polyline and ensure marker is present
+    // After both are set, update the route polyline, remove current location marker, add pickup/destination markers, and animate camera
     if (origin != null && destination != null) {
+      // Remove current location marker before and after getDirections
+      setState(() {
+        markers.removeWhere((m) => m.markerId.value == 'current_location');
+      });
       await getDirections();
       setState(() {
+        markers.removeWhere((m) => m.markerId.value == 'current_location');
+        // Remove any previous pickup/destination markers
+        markers.removeWhere((m) => m.markerId.value == 'pickup');
         markers.removeWhere((m) => m.markerId.value == 'destination');
+        // Add pickup marker
+        markers.add(
+          Marker(
+            markerId: const MarkerId('pickup'),
+            position: origin!,
+            infoWindow: const InfoWindow(title: 'Pickup'),
+          ),
+        );
+        // Add destination marker
         markers.add(
           Marker(
             markerId: const MarkerId('destination'),
@@ -187,6 +207,13 @@ class _AddNewTripState extends State<AddNewTrip> {
           ),
         );
       });
+      // Remove current location marker one more time for safety
+      setState(() {
+        markers.removeWhere((m) => m.markerId.value == 'current_location');
+      });
+      // Animate camera to pickup location
+      final GoogleMapController controller = await _controller.future;
+      controller.animateCamera(CameraUpdate.newLatLngZoom(origin!, 15.5));
     }
   }
 
@@ -234,10 +261,7 @@ class _AddNewTripState extends State<AddNewTrip> {
                     isPickup: true,
                     onChanged: (val) => _getPlacePredictions(val, true),
                     suffixIcon: IconButton(
-                      icon: const Icon(
-                        Icons.gps_fixed,
-                        color: Colors.blueAccent,
-                      ),
+                      icon: const Icon(Icons.gps_fixed, color: Colors.black),
                       onPressed: () async {
                         if (currentLocation != null) {
                           // Get address from lat/lng
@@ -268,7 +292,6 @@ class _AddNewTripState extends State<AddNewTrip> {
                     },
                   ),
 
-                  const SizedBox(height: 10),
                   buildSearchBox(
                     hint: "Enter Destination",
                     controller: _destinationController,
@@ -284,176 +307,286 @@ class _AddNewTripState extends State<AddNewTrip> {
                       _getPlaceLatLng(placeId, false);
                     },
                   ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: SizedBox(
+                      width: mq.width * 0.3,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.directions, color: Colors.white),
+                        label: const Text('Direction'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.lightBlueColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () async {
+                          // Only trigger if both fields have values
+                          if (_pickupController.text.isNotEmpty &&
+                              _destinationController.text.isNotEmpty) {
+                            // Try to get placeId for pickup
+                            String? pickupPlaceId;
+                            String? destinationPlaceId;
+                            // Find placeId from predictions if available
+                            if (_pickupPredictions.isNotEmpty) {
+                              final match = _pickupPredictions.firstWhere(
+                                (p) =>
+                                    p['description'] == _pickupController.text,
+                                orElse: () => null,
+                              );
+                              if (match != null)
+                                pickupPlaceId = match['place_id'];
+                            }
+                            if (_destinationPredictions.isNotEmpty) {
+                              final match = _destinationPredictions.firstWhere(
+                                (p) =>
+                                    p['description'] ==
+                                    _destinationController.text,
+                                orElse: () => null,
+                              );
+                              if (match != null)
+                                destinationPlaceId = match['place_id'];
+                            }
+                            // If not found, fallback to current values
+                            if (pickupPlaceId != null) {
+                              await _getPlaceLatLng(pickupPlaceId, true);
+                            }
+                            if (destinationPlaceId != null) {
+                              await _getPlaceLatLng(destinationPlaceId, false);
+                            }
+                            // If both lat/lng are already set, just update route and markers
+                            if (origin != null && destination != null) {
+                              // Remove current location marker before and after getDirections
+                              setState(() {
+                                markers.removeWhere(
+                                  (m) => m.markerId.value == 'current_location',
+                                );
+                              });
+                              await getDirections();
+                              setState(() {
+                                markers.removeWhere(
+                                  (m) => m.markerId.value == 'current_location',
+                                );
+                                markers.removeWhere(
+                                  (m) => m.markerId.value == 'pickup',
+                                );
+                                markers.removeWhere(
+                                  (m) => m.markerId.value == 'destination',
+                                );
+                                markers.add(
+                                  Marker(
+                                    markerId: const MarkerId('pickup'),
+                                    position: origin!,
+                                    infoWindow: const InfoWindow(
+                                      title: 'Pickup',
+                                    ),
+                                  ),
+                                );
+                                markers.add(
+                                  Marker(
+                                    markerId: const MarkerId('destination'),
+                                    position: destination!,
+                                    infoWindow: const InfoWindow(
+                                      title: 'Destination',
+                                    ),
+                                  ),
+                                );
+                              });
+                              setState(() {
+                                markers.removeWhere(
+                                  (m) => m.markerId.value == 'current_location',
+                                );
+                              });
+                              final GoogleMapController controller =
+                                  await _controller.future;
+                              controller.animateCamera(
+                                CameraUpdate.newLatLngZoom(origin!, 15.5),
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please select both pickup and destination.',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
-          DraggableScrollableSheet(
-            initialChildSize: 0.25,
-            minChildSize: 0.25,
-            maxChildSize: 0.7,
-            builder: (context, scrollController) {
-              return Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Text(
-                        "Find Places on Route",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 4,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 1,
-                            ),
-                        itemCount: poiCategories.length,
-                        itemBuilder: (context, index) {
-                          final cat = poiCategories[index];
-                          final catKey = cleanLabel(cat['label']);
-                          final isSelected = selectedCategories.contains(
-                            catKey,
-                          );
+          // DraggableScrollableSheet(
+          //   initialChildSize: 0.25,
+          //   minChildSize: 0.25,
+          //   maxChildSize: 0.7,
+          //   builder: (context, scrollController) {
+          //     return Container(
+          //       decoration: const BoxDecoration(
+          //         color: Colors.white,
+          //         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          //       ),
+          //       child: SingleChildScrollView(
+          //         controller: scrollController,
+          //         padding: const EdgeInsets.all(16),
+          //         child: Column(
+          //           children: [
+          //             Text(
+          //               "Find Places on Route",
+          //               style: TextStyle(
+          //                 fontWeight: FontWeight.bold,
+          //                 fontSize: 16,
+          //               ),
+          //             ),
+          //             GridView.builder(
+          //               shrinkWrap: true,
+          //               physics: const NeverScrollableScrollPhysics(),
+          //               gridDelegate:
+          //                   const SliverGridDelegateWithFixedCrossAxisCount(
+          //                     crossAxisCount: 4,
+          //                     mainAxisSpacing: 12,
+          //                     crossAxisSpacing: 12,
+          //                     childAspectRatio: 1,
+          //                   ),
+          //               itemCount: poiCategories.length,
+          //               itemBuilder: (context, index) {
+          //                 final cat = poiCategories[index];
+          //                 final catKey = cleanLabel(cat['label']);
+          //                 final isSelected = selectedCategories.contains(
+          //                   catKey,
+          //                 );
 
-                          return GestureDetector(
-                            onTap: () async {
-                              final isSelected = selectedCategories.contains(
-                                catKey,
-                              );
-                              setState(() {
-                                // Only allow one active category at a time
-                                selectedCategories.clear();
-                                if (!isSelected) {
-                                  selectedCategories.add(catKey);
-                                }
-                              });
+          //                 return GestureDetector(
+          //                   onTap: () async {
+          //                     final isSelected = selectedCategories.contains(
+          //                       catKey,
+          //                     );
+          //                     setState(() {
+          //                       // Only allow one active category at a time
+          //                       selectedCategories.clear();
+          //                       if (!isSelected) {
+          //                         selectedCategories.add(catKey);
+          //                       }
+          //                     });
 
-                              // Always clear all POI markers before showing new ones
-                              Set<Marker> newCategoryMarkers = {};
-                              if (selectedCategories.isNotEmpty) {
-                                final activeCatKey = selectedCategories.first;
-                                final activeCat = poiCategories.firstWhere(
-                                  (c) => cleanLabel(c['label']) == activeCatKey,
-                                );
-                                await fetchNearbyPlaces(
-                                  category: activeCat,
-                                  origin: origin,
-                                  destination: destination,
-                                  currentLocation: currentLocation,
-                                  apiKey: apiKey,
-                                  markers: newCategoryMarkers,
-                                  onMarkersUpdated: (_) {},
-                                  routePolyline:
-                                      (origin != null &&
-                                          destination != null &&
-                                          polylineCoordinates.isNotEmpty)
-                                      ? polylineCoordinates
-                                      : null,
-                                );
-                              }
-                              // Remove all previous POI markers
-                              markers.removeWhere(
-                                (m) => m.markerId.value.startsWith("poi_"),
-                              );
-                              // Add only the new markers for the active category
-                              setState(() {
-                                markers.addAll(newCategoryMarkers);
-                              });
-                            },
+          //                     // Always clear all POI markers before showing new ones
+          //                     Set<Marker> newCategoryMarkers = {};
+          //                     if (selectedCategories.isNotEmpty) {
+          //                       final activeCatKey = selectedCategories.first;
+          //                       final activeCat = poiCategories.firstWhere(
+          //                         (c) => cleanLabel(c['label']) == activeCatKey,
+          //                       );
+          //                       await fetchNearbyPlaces(
+          //                         category: activeCat,
+          //                         origin: origin,
+          //                         destination: destination,
+          //                         currentLocation: currentLocation,
+          //                         apiKey: apiKey,
+          //                         markers: newCategoryMarkers,
+          //                         onMarkersUpdated: (_) {},
+          //                         routePolyline:
+          //                             (origin != null &&
+          //                                 destination != null &&
+          //                                 polylineCoordinates.isNotEmpty)
+          //                             ? polylineCoordinates
+          //                             : null,
+          //                       );
+          //                     }
+          //                     // Remove all previous POI markers
+          //                     markers.removeWhere(
+          //                       (m) => m.markerId.value.startsWith("poi_"),
+          //                     );
+          //                     // Add only the new markers for the active category
+          //                     setState(() {
+          //                       markers.addAll(newCategoryMarkers);
+          //                     });
+          //                   },
 
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
+          //                   child: AnimatedContainer(
+          //                     duration: const Duration(milliseconds: 200),
 
-                              decoration: BoxDecoration(
-                                gradient: isSelected
-                                    ? const LinearGradient(
-                                        colors: [
-                                          Colors.blue,
-                                          Colors.blueAccent,
-                                        ],
-                                      )
-                                    : null,
-                                color: isSelected ? null : Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.blueAccent),
-                                boxShadow: isSelected
-                                    ? [
-                                        const BoxShadow(
-                                          color: Colors.blueAccent,
-                                          blurRadius: 5,
-                                          offset: Offset(0, 2),
-                                        ),
-                                      ]
-                                    : [],
-                              ),
-                              child: Center(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      cat["icon"],
-                                      color: AppColors.splashBgColor,
-                                      size: 35,
-                                    ),
-                                    Text(
-                                      cat['label'],
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                        color: isSelected
-                                            ? Colors.white
-                                            : Colors.blue,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+          //                     decoration: BoxDecoration(
+          //                       gradient: isSelected
+          //                           ? const LinearGradient(
+          //                               colors: [
+          //                                 Colors.blue,
+          //                                 Colors.blueAccent,
+          //                               ],
+          //                             )
+          //                           : null,
+          //                       color: isSelected ? null : Colors.white,
+          //                       borderRadius: BorderRadius.circular(20),
+          //                       border: Border.all(color: Colors.blueAccent),
+          //                       boxShadow: isSelected
+          //                           ? [
+          //                               const BoxShadow(
+          //                                 color: Colors.blueAccent,
+          //                                 blurRadius: 5,
+          //                                 offset: Offset(0, 2),
+          //                               ),
+          //                             ]
+          //                           : [],
+          //                     ),
+          //                     child: Center(
+          //                       child: Column(
+          //                         crossAxisAlignment: CrossAxisAlignment.center,
+          //                         mainAxisAlignment: MainAxisAlignment.center,
+          //                         children: [
+          //                           Icon(
+          //                             cat["icon"],
+          //                             color: AppColors.splashBgColor,
+          //                             size: 35,
+          //                           ),
+          //                           Text(
+          //                             cat['label'],
+          //                             textAlign: TextAlign.center,
+          //                             style: TextStyle(
+          //                               fontWeight: FontWeight.w600,
+          //                               fontSize: 14,
+          //                               color: isSelected
+          //                                   ? Colors.white
+          //                                   : Colors.blue,
+          //                             ),
+          //                           ),
+          //                         ],
+          //                       ),
+          //                     ),
+          //                   ),
+          //                 );
+          //               },
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //     );
+          //   },
+          // ),
         ],
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        padding: const EdgeInsets.fromLTRB(30, 0, 30, 24),
         child: SizedBox(
           width: double.infinity,
           height: 54,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blueAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-              textStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            child: const Text('Next'),
-            onPressed: () async {
+          child: RoundButton(
+            title: 'Next',
+            fontFamily: "",
+            fontSize: 18,
+            borderRadius: 30,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            bgColor: AppColors.lightBlueColor,
+            titleColor: Colors.white,
+            onPress: () async {
               if (origin != null && destination != null) {
                 final user = FirebaseAuth.instance.currentUser;
                 if (user == null) {
@@ -463,7 +596,6 @@ class _AddNewTripState extends State<AddNewTrip> {
                   return;
                 }
 
-                // Check if route exists before navigating
                 final url =
                     'https://maps.googleapis.com/maps/api/directions/json?origin=${origin!.latitude},${origin!.longitude}&destination=${destination!.latitude},${destination!.longitude}&key=$apiKey';
                 final response = await http.get(Uri.parse(url));
@@ -481,62 +613,20 @@ class _AddNewTripState extends State<AddNewTrip> {
                   );
                   return;
                 }
-                Future<void> preloadPOIMarkers({
-                  required LatLng origin,
-                  required LatLng destination,
-                  required List<LatLng> routePolyline,
-                  required String apiKey,
-                }) async {
-                  List<Map<String, dynamic>> poiCategories = [
-                    {"label": "Fuel", "types": "gas_station"},
-                    {"label": "ATM", "types": "atm"},
-                    {"label": "Food", "types": "restaurant"},
-                    {"label": "Convenience", "types": "convenience_store"},
-                    {
-                      "label": "EV Charging",
-                      "types": "electric_vehicle_charging_station",
-                    },
-                    {"label": "Medical", "types": "hospital"},
-                    {"label": "Weigh Station", "keyword": "weigh station"},
-                    {"label": "Warehouses", "keyword": "logistics warehouse"},
-                  ];
 
-                  for (var category in poiCategories) {
-                    Set<Marker> markers = {};
-                    await fetchNearbyPlaces(
-                      category: category,
-                      origin: origin,
-                      destination: destination,
-                      currentLocation: origin,
-                      apiKey: apiKey,
-                      markers: markers,
-                      onMarkersUpdated: (result) {
-                        POIMarkerCache().setMarkers(
-                          cleanLabel(category['label']),
-                          result,
-                        );
-                      },
-                      routePolyline: routePolyline,
-                    );
-                  }
-                }
-
-                // ✅ Proceed to next screen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) {
-                      return CalculatorScreen(
-                        pickup: _pickupController.text,
-                        destination: _destinationController.text,
-                        userName: user.displayName ?? 'N/A',
-                        userEmail: user.email ?? 'N/A',
-                        pickupLat: origin!.latitude,
-                        pickupLng: origin!.longitude,
-                        destinationLat: destination!.latitude,
-                        destinationLng: destination!.longitude,
-                      );
-                    },
+                    builder: (context) => CalculatorScreen(
+                      pickup: _pickupController.text,
+                      destination: _destinationController.text,
+                      userName: user.displayName ?? 'N/A',
+                      userEmail: user.email ?? 'N/A',
+                      pickupLat: origin!.latitude,
+                      pickupLng: origin!.longitude,
+                      destinationLat: destination!.latitude,
+                      destinationLng: destination!.longitude,
+                    ),
                   ),
                 );
               } else {

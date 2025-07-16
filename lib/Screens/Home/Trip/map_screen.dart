@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/navigation_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
@@ -227,10 +228,7 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(
-                          Icons.gps_fixed,
-                          color: Colors.blueAccent,
-                        ),
+                        icon: const Icon(Icons.gps_fixed, color: Colors.black),
                         tooltip: "Use current location",
                         onPressed: () async {
                           Position position =
@@ -288,7 +286,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
           DraggableScrollableSheet(
-            initialChildSize: 0.25,
+            initialChildSize: 0.2,
             minChildSize: 0.2,
             maxChildSize: 0.6,
             builder: (context, scrollController) {
@@ -306,12 +304,14 @@ class _MapScreenState extends State<MapScreen> {
                         "Find Places on Route",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 18,
+                          color: AppColors.darkBlueColor,
                         ),
                       ),
+                      // Removed extra space below the heading
                       GridView.builder(
                         shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
+                        physics: const BouncingScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 4,
@@ -400,11 +400,13 @@ class _MapScreenState extends State<MapScreen> {
                                     : null,
                                 color: isSelected ? null : Colors.white,
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.black),
+                                border: Border.all(
+                                  color: AppColors.lightBlueColor,
+                                ),
                                 boxShadow: isSelected
                                     ? [
                                         const BoxShadow(
-                                          color: Colors.blueAccent,
+                                          color: AppColors.lightBlueColor,
                                           blurRadius: 5,
                                           offset: Offset(0, 2),
                                         ),
@@ -430,11 +432,13 @@ class _MapScreenState extends State<MapScreen> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          Icon(
-                                            cat["icon"],
-                                            color: AppColors.splashBgColor,
-                                            size: 35,
+                                          Image.asset(
+                                            cat['iconPath'],
+                                            width: 35,
+                                            height: 35,
+                                            fit: BoxFit.contain,
                                           ),
+
                                           Text(
                                             cat['label'],
                                             textAlign: TextAlign.center,
@@ -482,61 +486,126 @@ class _MapScreenState extends State<MapScreen> {
         },
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 05, 16, 24),
-        child: SizedBox(
-          width: double.infinity,
-          height: 54,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blueAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-              textStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            child: const Text('End trip'),
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Confirm End Trip'),
-                  content: const Text(
-                    'Are you sure you want to end the current trip?',
+        padding: const EdgeInsets.fromLTRB(30, 8, 30, 24),
+        child: RoundButton(
+          title: 'End Trip',
+          fontSize: 18,
+          fontFamily: "",
+          borderRadius: 30,
+          onPress: () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (context) => Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(
+                    color: AppColors.lightBlueColor,
+                    width: 1,
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('Cancel'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text('End Trip'),
-                    ),
-                  ],
                 ),
-              );
-
-              if (confirm == true) {
-                final dbRef = FirebaseDatabase.instance.ref(
-                  'trips/${widget.tripId}',
-                );
-                await dbRef.update({'status': 'completed'});
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Trip ended and marked as completed.'),
-                    backgroundColor: AppColors.lightBlueColor,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 24,
                   ),
-                );
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Confirm End Trip',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: AppColors.darkBlueColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Are you sure you want to end the current trip',
+                        style: TextStyle(fontSize: 14, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                color: AppColors.lightBlueColor,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              child: Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  color: AppColors.darkBlueColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton(
+                            onPressed: () async {
+                              // ✅ Execute original End Trip functionality
+                              final dbRef = FirebaseDatabase.instance.ref(
+                                'trips/${widget.tripId}',
+                              );
+                              await dbRef.update({'status': 'completed'});
 
-                Navigator.pop(context);
-              }
-            },
-          ),
+                              // Close dialog
+                              Navigator.of(context).pop(true);
+
+                              // Show snackbar
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Trip ended and marked as completed.',
+                                  ),
+                                  backgroundColor: AppColors.lightBlueColor,
+                                ),
+                              );
+
+                              // Pop screen
+                              Navigator.pop(context);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.lightBlueColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 10,
+                              ),
+                              child: Text(
+                                'End Trip',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

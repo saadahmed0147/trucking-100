@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fuel_route/Screens/Home/home_screen.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
+import 'package:fuel_route/map_api_key.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_database/firebase_database.dart';
 
@@ -45,7 +46,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   String? duration;
   bool isLoading = false;
 
-  final String apiKey = 'AIzaSyDo8HGqkDwHuSuxcWAkHuK7H_gv1ThasBg';
+  final String apiKey = ApiKeys.googleMapsApiKey;
 
   @override
   void initState() {

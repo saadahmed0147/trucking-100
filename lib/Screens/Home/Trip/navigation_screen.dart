@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:fuel_route/map_api_key.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -43,7 +44,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   String currentInstruction = '';
   bool routeError = false;
 
-  final String apiKey = 'AIzaSyDo8HGqkDwHuSuxcWAkHuK7H_gv1ThasBg';
+  final String apiKey = ApiKeys.googleMapsApiKey;
   final PolylinePoints polylinePoints = PolylinePoints();
   StreamSubscription<Position>? positionStream;
 

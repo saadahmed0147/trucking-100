@@ -5,10 +5,9 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/calculator_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
-import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
-import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_marker_cache.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/main.dart';
+import 'package:fuel_route/map_api_key.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -38,7 +37,7 @@ class _AddNewTripState extends State<AddNewTrip> {
   List<dynamic> _pickupPredictions = [];
   List<dynamic> _destinationPredictions = [];
 
-  final String apiKey = 'AIzaSyDo8HGqkDwHuSuxcWAkHuK7H_gv1ThasBg';
+  final String apiKey = ApiKeys.googleMapsApiKey;
 
   Set<String> selectedCategories = {};
 

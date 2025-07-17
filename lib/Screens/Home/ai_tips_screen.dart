@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
+import 'package:fuel_route/map_api_key.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -112,7 +113,7 @@ class _AiTipsScreenState extends State<AiTipsScreen> {
   Future<String> generateTripInsights(Map<String, dynamic> trip) async {
     final model = GenerativeModel(
       model: 'gemini-1.5-pro-latest',
-      apiKey: "AIzaSyBfFfyGItj9t66NuCdulFlQQCJmoZLVugA",
+      apiKey: ApiKeys.googleMapsApiKey,
     );
 
     final prompt =

@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/navigation_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_marker_cache.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
+import 'package:fuel_route/map_api_key.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -38,12 +38,11 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  String? loadingCategory;
-  bool isLoading = false;
-
   final Completer<GoogleMapController> _controller = Completer();
   final TextEditingController _pickupController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
+  String? loadingCategory;
+  bool isLoading = false;
 
   LatLng? origin;
   LatLng? destination;
@@ -55,7 +54,7 @@ class _MapScreenState extends State<MapScreen> {
   List<dynamic> _pickupPredictions = [];
   List<dynamic> _destinationPredictions = [];
 
-  final String apiKey = 'AIzaSyDo8HGqkDwHuSuxcWAkHuK7H_gv1ThasBg';
+  final String apiKey = ApiKeys.googleMapsApiKey;
 
   Set<String> selectedCategories = {};
   StreamSubscription? locationStream;
@@ -117,7 +116,7 @@ class _MapScreenState extends State<MapScreen> {
           Marker(
             markerId: const MarkerId('pickup'),
             position: currentLocation!,
-            infoWindow: const InfoWindow(title: 'Pickup (Your Location)'),
+            infoWindow: const InfoWindow(title: 'Pickup (Live)'),
           ),
         );
       });
@@ -152,28 +151,14 @@ class _MapScreenState extends State<MapScreen> {
       );
       return;
     }
-
-    // --- Use detailed polyline decoding for road-accurate route ---
-    final PolylinePoints polylinePoints = PolylinePoints();
-    List<LatLng> fullRoute = [];
-    final steps = data['routes'][0]['legs'][0]['steps'];
-
-    for (var step in steps) {
-      final encoded = step['polyline']['points'];
-      final decodedStep = polylinePoints.decodePolyline(encoded);
-      fullRoute.addAll(decodedStep.map((e) => LatLng(e.latitude, e.longitude)));
-    }
-
+    final newPolylines = await DirectionsService.getDirections(
+      origin: origin!,
+      destination: destination!,
+      apiKey: apiKey,
+      polylineCoordinates: polylineCoordinates,
+    );
     setState(() {
-      polylineCoordinates = fullRoute;
-      polylines = {
-        Polyline(
-          polylineId: const PolylineId("route"),
-          color: Colors.blue,
-          width: 6,
-          points: polylineCoordinates,
-        ),
-      };
+      polylines.addAll(newPolylines);
     });
   }
 
@@ -229,6 +214,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.gps_fixed, color: Colors.black),
+
                         tooltip: "Use current location",
                         onPressed: () async {
                           Position position =
@@ -308,7 +294,6 @@ class _MapScreenState extends State<MapScreen> {
                           color: AppColors.darkBlueColor,
                         ),
                       ),
-                      // Removed extra space below the heading
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const BouncingScrollPhysics(),
@@ -371,8 +356,11 @@ class _MapScreenState extends State<MapScreen> {
                                         : null,
                                   );
                                 }
-
-                                // Apply markers
+                                // Remove all previous POI markers
+                                markers.removeWhere(
+                                  (m) => m.markerId.value.startsWith("poi_"),
+                                );
+                                // Add only the new markers for the active category
                                 setState(() {
                                   markers.addAll(newCategoryMarkers);
                                 });
@@ -389,6 +377,7 @@ class _MapScreenState extends State<MapScreen> {
 
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
+
                               decoration: BoxDecoration(
                                 gradient: isSelected
                                     ? const LinearGradient(
@@ -438,7 +427,6 @@ class _MapScreenState extends State<MapScreen> {
                                             height: 35,
                                             fit: BoxFit.contain,
                                           ),
-
                                           Text(
                                             cat['label'],
                                             textAlign: TextAlign.center,

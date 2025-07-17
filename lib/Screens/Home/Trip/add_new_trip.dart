@@ -22,6 +22,8 @@ class AddNewTrip extends StatefulWidget {
 }
 
 class _AddNewTripState extends State<AddNewTrip> {
+  Timer? _debounce;
+
   final Completer<GoogleMapController> _controller = Completer();
   final TextEditingController _pickupController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
@@ -46,6 +48,12 @@ class _AddNewTripState extends State<AddNewTrip> {
     super.initState();
     selectedCategories = {}; // No category selected initially
     getCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();  
   }
 
   void getCurrentLocation() async {
@@ -258,7 +266,12 @@ class _AddNewTripState extends State<AddNewTrip> {
                     hint: "Enter Pickup Location",
                     controller: _pickupController,
                     isPickup: true,
-                    onChanged: (val) => _getPlacePredictions(val, true),
+                    onChanged: (val) {
+                      if (_debounce?.isActive ?? false) _debounce!.cancel();
+                      _debounce = Timer(const Duration(milliseconds: 500), () {
+                        _getPlacePredictions(val, true);
+                      });
+                    },
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.gps_fixed, color: Colors.black),
                       onPressed: () async {
@@ -295,7 +308,12 @@ class _AddNewTripState extends State<AddNewTrip> {
                     hint: "Enter Destination",
                     controller: _destinationController,
                     isPickup: false,
-                    onChanged: (val) => _getPlacePredictions(val, false),
+                    onChanged: (val) {
+                      if (_debounce?.isActive ?? false) _debounce!.cancel();
+                      _debounce = Timer(const Duration(milliseconds: 500), () {
+                        _getPlacePredictions(val, false);
+                      });
+                    },
                   ),
 
                   buildPredictionList(

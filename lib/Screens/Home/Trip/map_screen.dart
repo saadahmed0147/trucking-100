@@ -6,7 +6,6 @@ import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/navigation_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
-import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_marker_cache.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/map_api_key.dart';
 import 'package:geolocator/geolocator.dart';
@@ -47,12 +46,16 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? origin;
   LatLng? destination;
   LatLng? currentLocation;
+  LatLng? lastFetchedLocation;
+  DateTime lastGeocodeCall = DateTime.now().subtract(Duration(seconds: 30));
 
   Set<Marker> markers = {};
   Set<Polyline> polylines = {};
   List<LatLng> polylineCoordinates = [];
   List<dynamic> _pickupPredictions = [];
   List<dynamic> _destinationPredictions = [];
+  final Map<String, Set<Marker>> poiCache = {};
+  DateTime lastTapTime = DateTime.now().subtract(const Duration(seconds: 2));
 
   final String apiKey = ApiKeys.googleMapsApiKey;
 
@@ -61,8 +64,6 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   void initState() {
-    // load all markers on the map
-    loadCachedMarkers();
     super.initState();
     selectedCategories = {};
     _pickupController.text = widget.pickup;
@@ -94,42 +95,49 @@ class _MapScreenState extends State<MapScreen> {
     super.dispose();
   }
 
-  void loadCachedMarkers() {
-    final allMarkers = POIMarkerCache().allMarkers;
-    Set<Marker> combined = {};
-    for (var entry in allMarkers.entries) {
-      combined.addAll(entry.value);
-    }
-
-    setState(() {
-      markers.addAll(combined); // _markers is your local Set<Marker>
-    });
-  }
-
   void startLocationUpdates() {
     locationStream = Geolocator.getPositionStream().listen((position) async {
-      currentLocation = LatLng(position.latitude, position.longitude);
-      // Update pickup marker
-      setState(() {
-        markers.removeWhere((m) => m.markerId.value == 'pickup');
-        markers.add(
-          Marker(
-            markerId: const MarkerId('pickup'),
-            position: currentLocation!,
-            infoWindow: const InfoWindow(title: 'Pickup (Live)'),
-          ),
-        );
-      });
-      // Update pickup location in Firebase
-      final dbRef = FirebaseDatabase.instance.ref('trips/${widget.tripId}');
-      await dbRef.update({
-        'pickupLat': position.latitude,
-        'pickupLng': position.longitude,
-        'pickup': await getAddressFromLatLng(currentLocation!),
-        'currentLocationUpdatedAt': DateTime.now().toIso8601String(),
-      });
-      // Update search bar
-      _pickupController.text = await getAddressFromLatLng(currentLocation!);
+      final newLocation = LatLng(position.latitude, position.longitude);
+
+      // Only fetch address if moved significantly OR enough time has passed
+      if (lastFetchedLocation == null ||
+          Geolocator.distanceBetween(
+                lastFetchedLocation!.latitude,
+                lastFetchedLocation!.longitude,
+                newLocation.latitude,
+                newLocation.longitude,
+              ) >
+              50 || // Moved more than 50 meters
+          DateTime.now().difference(lastGeocodeCall) > Duration(seconds: 30)) {
+        lastFetchedLocation = newLocation;
+        lastGeocodeCall = DateTime.now();
+
+        currentLocation = newLocation;
+
+        try {
+          final address = await getAddressFromLatLng(currentLocation!);
+          _pickupController.text = address;
+
+          // Firebase update (optional, if needed)
+          if (widget.tripId != null && widget.tripId.isNotEmpty) {
+            final dbRef = FirebaseDatabase.instance.ref(
+              'trips/${widget.tripId}',
+            );
+            await dbRef.update({
+              'pickupLat': currentLocation!.latitude,
+              'pickupLng': currentLocation!.longitude,
+              'pickup': address,
+            });
+          }
+        } catch (e) {
+          debugPrint("Geocode error: $e");
+        }
+      } else {
+        // Just update current location silently (for dot movement)
+        currentLocation = newLocation;
+      }
+
+      setState(() {});
     });
   }
 
@@ -318,7 +326,13 @@ class _MapScreenState extends State<MapScreen> {
                                 catKey,
                               );
 
-                              // Ignore if it's already loading the same category
+                              // Prevent rapid taps
+                              if (DateTime.now().difference(lastTapTime) <
+                                  const Duration(seconds: 2))
+                                return;
+                              lastTapTime = DateTime.now();
+
+                              // Skip if already loading same category
                               if (loadingCategory == catKey && isLoading)
                                 return;
 
@@ -329,17 +343,22 @@ class _MapScreenState extends State<MapScreen> {
                                 isLoading = true;
                               });
 
-                              // Clear existing POI markers
-                              markers.removeWhere(
-                                (m) => m.markerId.value.startsWith("poi_"),
-                              );
-                              Set<Marker> newCategoryMarkers = {};
+                              // Unique key for current route + category
+                              final routeKey =
+                                  "${catKey}_${origin?.latitude}_${origin?.longitude}_${destination?.latitude}_${destination?.longitude}";
 
                               try {
-                                if (selectedCategories.isNotEmpty) {
+                                Set<Marker> newCategoryMarkers = {};
+
+                                // Use cache if exists
+                                if (poiCache.containsKey(routeKey)) {
+                                  newCategoryMarkers = poiCache[routeKey]!;
+                                  debugPrint("Using cached POIs for $catKey");
+                                } else if (selectedCategories.isNotEmpty) {
                                   final activeCat = poiCategories.firstWhere(
                                     (c) => cleanLabel(c['label']) == catKey,
                                   );
+
                                   await fetchNearbyPlaces(
                                     category: activeCat,
                                     origin: origin,
@@ -355,19 +374,20 @@ class _MapScreenState extends State<MapScreen> {
                                         ? polylineCoordinates
                                         : null,
                                   );
+
+                                  poiCache[routeKey] = newCategoryMarkers;
                                 }
-                                // Remove all previous POI markers
+
+                                // Remove previous POI markers and add new
                                 markers.removeWhere(
                                   (m) => m.markerId.value.startsWith("poi_"),
                                 );
-                                // Add only the new markers for the active category
                                 setState(() {
                                   markers.addAll(newCategoryMarkers);
                                 });
                               } catch (e) {
                                 debugPrint("Error fetching POIs: $e");
                               } finally {
-                                // Reset loading state
                                 setState(() {
                                   isLoading = false;
                                   loadingCategory = null;
@@ -395,7 +415,7 @@ class _MapScreenState extends State<MapScreen> {
                                 boxShadow: isSelected
                                     ? [
                                         const BoxShadow(
-                                          color: AppColors.lightBlueColor,
+                                          color: Colors.blueAccent,
                                           blurRadius: 5,
                                           offset: Offset(0, 2),
                                         ),
@@ -453,6 +473,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ],
       ),
+
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.directions, color: AppColors.whiteColor),
         backgroundColor: AppColors.lightBlueColor,

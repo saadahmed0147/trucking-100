@@ -59,7 +59,7 @@ class _HistoryDashboardScreenState extends State<HistoryDashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.tabsBgColor,
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
+        padding: const EdgeInsets.fromLTRB(30, 30, 30, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

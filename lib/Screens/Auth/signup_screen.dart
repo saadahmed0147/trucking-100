@@ -112,8 +112,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
 
-                  Padding(
-                    padding: const EdgeInsets.only(
+                  const Padding(
+                    padding: EdgeInsets.only(
                       top: 10,
                       right: 30,
                       left: 30,
@@ -135,7 +135,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Name',
                           style: TextStyle(
                             fontSize: 14,

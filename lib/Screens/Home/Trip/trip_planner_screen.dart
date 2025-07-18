@@ -199,11 +199,11 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(18),
-                                boxShadow: [
+                                boxShadow: const [
                                   BoxShadow(
                                     color: Colors.blueAccent,
                                     blurRadius: 4,
-                                    offset: const Offset(0, 2),
+                                    offset: Offset(0, 2),
                                   ),
                                 ],
                                 border: Border.all(
@@ -383,17 +383,65 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
             if (activeTrip) {
               showDialog(
                 context: context,
-                builder: (_) => AlertDialog(
-                  title: const Text("Active Trip"),
-                  content: const Text(
-                    "You already have an active trip. Please complete your current trip before creating a new one.",
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("OK"),
+                builder: (_) => Dialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(
+                      color: AppColors.lightBlueColor,
+                      width: 1,
                     ),
-                  ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 24,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Active Trip',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: AppColors.darkBlueColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'You already have an active trip. Please complete your current trip before creating a new one.',
+                          style: TextStyle(fontSize: 14, color: Colors.black87),
+                        ),
+                        const SizedBox(height: 24),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.lightBlueColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 10,
+                              ),
+                              child: Text(
+                                'OK',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               );
               return;

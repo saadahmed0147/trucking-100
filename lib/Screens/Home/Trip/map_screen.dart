@@ -7,7 +7,7 @@ import 'package:fuel_route/Screens/Home/Trip/navigation_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
-import 'package:fuel_route/map_api_key.dart';
+import 'package:fuel_route/api_keys.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -52,8 +52,8 @@ class _MapScreenState extends State<MapScreen> {
   Set<Marker> markers = {};
   Set<Polyline> polylines = {};
   List<LatLng> polylineCoordinates = [];
-  List<dynamic> _pickupPredictions = [];
-  List<dynamic> _destinationPredictions = [];
+  // List<dynamic> _pickupPredictions = [];
+  // List<dynamic> _destinationPredictions = [];
   final Map<String, Set<Marker>> poiCache = {};
   DateTime lastTapTime = DateTime.now().subtract(const Duration(seconds: 2));
 
@@ -119,6 +119,7 @@ class _MapScreenState extends State<MapScreen> {
           _pickupController.text = address;
 
           // Firebase update (optional, if needed)
+          // ignore: unnecessary_null_comparison
           if (widget.tripId != null && widget.tripId.isNotEmpty) {
             final dbRef = FirebaseDatabase.instance.ref(
               'trips/${widget.tripId}',
@@ -280,9 +281,9 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
           DraggableScrollableSheet(
-            initialChildSize: 0.2,
-            minChildSize: 0.2,
-            maxChildSize: 0.6,
+            initialChildSize: 0.25,
+            minChildSize: 0.25,
+            maxChildSize: 0.7,
             builder: (context, scrollController) {
               return Container(
                 decoration: const BoxDecoration(
@@ -302,9 +303,11 @@ class _MapScreenState extends State<MapScreen> {
                           color: AppColors.darkBlueColor,
                         ),
                       ),
+                      const SizedBox(height: 12),
                       GridView.builder(
                         shrinkWrap: true,
-                        physics: const BouncingScrollPhysics(),
+                        physics:
+                            const NeverScrollableScrollPhysics(), // ✅ prevents scroll conflict
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 4,
@@ -322,82 +325,51 @@ class _MapScreenState extends State<MapScreen> {
 
                           return GestureDetector(
                             onTap: () async {
-                              final isSelected = selectedCategories.contains(
-                                catKey,
-                              );
-
-                              // Prevent rapid taps
-                              if (DateTime.now().difference(lastTapTime) <
-                                  const Duration(seconds: 2))
-                                return;
-                              lastTapTime = DateTime.now();
-
-                              // Skip if already loading same category
-                              if (loadingCategory == catKey && isLoading)
-                                return;
-
+                              final alreadySelected = selectedCategories
+                                  .contains(catKey);
                               setState(() {
                                 selectedCategories.clear();
-                                if (!isSelected) selectedCategories.add(catKey);
-                                loadingCategory = catKey;
-                                isLoading = true;
+                                if (!alreadySelected) {
+                                  selectedCategories.add(catKey);
+                                  isLoading = true;
+                                  loadingCategory = catKey;
+                                }
                               });
 
-                              // Unique key for current route + category
-                              final routeKey =
-                                  "${catKey}_${origin?.latitude}_${origin?.longitude}_${destination?.latitude}_${destination?.longitude}";
-
-                              try {
-                                Set<Marker> newCategoryMarkers = {};
-
-                                // Use cache if exists
-                                if (poiCache.containsKey(routeKey)) {
-                                  newCategoryMarkers = poiCache[routeKey]!;
-                                  debugPrint("Using cached POIs for $catKey");
-                                } else if (selectedCategories.isNotEmpty) {
-                                  final activeCat = poiCategories.firstWhere(
-                                    (c) => cleanLabel(c['label']) == catKey,
-                                  );
-
-                                  await fetchNearbyPlaces(
-                                    category: activeCat,
-                                    origin: origin,
-                                    destination: destination,
-                                    currentLocation: currentLocation,
-                                    apiKey: apiKey,
-                                    markers: newCategoryMarkers,
-                                    onMarkersUpdated: (_) {},
-                                    routePolyline:
-                                        (origin != null &&
-                                            destination != null &&
-                                            polylineCoordinates.isNotEmpty)
-                                        ? polylineCoordinates
-                                        : null,
-                                  );
-
-                                  poiCache[routeKey] = newCategoryMarkers;
-                                }
-
-                                // Remove previous POI markers and add new
-                                markers.removeWhere(
-                                  (m) => m.markerId.value.startsWith("poi_"),
+                              Set<Marker> newCategoryMarkers = {};
+                              if (!alreadySelected) {
+                                final activeCat = poiCategories.firstWhere(
+                                  (c) => cleanLabel(c['label']) == catKey,
                                 );
-                                setState(() {
-                                  markers.addAll(newCategoryMarkers);
-                                });
-                              } catch (e) {
-                                debugPrint("Error fetching POIs: $e");
-                              } finally {
-                                setState(() {
-                                  isLoading = false;
-                                  loadingCategory = null;
-                                });
+                                await fetchNearbyPlaces(
+                                  category: activeCat,
+                                  origin: origin,
+                                  destination: destination,
+                                  currentLocation: currentLocation,
+                                  apiKey: apiKey,
+                                  markers: newCategoryMarkers,
+                                  onMarkersUpdated: (_) {},
+                                  routePolyline:
+                                      (origin != null &&
+                                          destination != null &&
+                                          polylineCoordinates.isNotEmpty)
+                                      ? polylineCoordinates
+                                      : null,
+                                );
                               }
-                            },
 
+                              markers.removeWhere(
+                                (m) => m.markerId.value.startsWith("poi_"),
+                              );
+
+                              setState(() {
+                                markers.addAll(newCategoryMarkers);
+                                isLoading = false;
+                                loadingCategory = "";
+                              });
+                            },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-
                               decoration: BoxDecoration(
                                 gradient: isSelected
                                     ? const LinearGradient(
@@ -475,7 +447,6 @@ class _MapScreenState extends State<MapScreen> {
       ),
 
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.directions, color: AppColors.whiteColor),
         backgroundColor: AppColors.lightBlueColor,
         onPressed: () {
           // Open navigation screen instantly, pass all required trip data
@@ -493,6 +464,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
           );
         },
+        child: Icon(Icons.directions, color: AppColors.whiteColor),
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(30, 8, 30, 24),
@@ -502,6 +474,7 @@ class _MapScreenState extends State<MapScreen> {
           fontFamily: "",
           borderRadius: 30,
           onPress: () async {
+            // ignore: unused_local_variable
             final confirm = await showDialog<bool>(
               context: context,
               builder: (context) => Dialog(

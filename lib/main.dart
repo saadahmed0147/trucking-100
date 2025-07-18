@@ -2,7 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:fuel_route/Routes/route_names.dart';
 import 'package:fuel_route/Routes/routes.dart';
-import 'package:fuel_route/Screens/Payment/payment_screen.dart';
 import 'package:fuel_route/firebase_options.dart';
 
 void main() async {
@@ -20,12 +19,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     mq = MediaQuery.of(context).size;
-    return MaterialApp(
+    return const MaterialApp(
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       initialRoute: RouteNames.splashScreen,
       onGenerateRoute: Routes.generateRoute,
-      // home: PaymentScreen(),
+      // home:  ,
     );
   }
 }

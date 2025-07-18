@@ -67,7 +67,7 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(
+        title: const Text(
           "Forgot Password",
           style: TextStyle(
             fontSize: 18,
@@ -111,7 +111,7 @@ class _ForgetPassScreenState extends State<ForgetPassScreen> {
                       validatorValue: "Please enter a valid email",
                       focusNode: emailFocusNode,
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     RoundButton(
                       title: "Send ",
                       loading: _loading,

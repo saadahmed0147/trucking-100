@@ -110,8 +110,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 30),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 30),
                   child: Text(
                     textAlign: TextAlign.center,
                     'We will send your package or anything to your destination We will send your package or anything to your destination We will ckage or anything to your destination We will send your package or anything to your destination.',
@@ -126,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       "Sign in",
                       style: TextStyle(
                         color: AppColors.greyColor,
@@ -205,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             RouteNames.forgotPassScreen,
                           );
                         },
-                        child: Text(
+                        child: const Text(
                           "Forgot Password?",
                           style: TextStyle(
                             fontFamily: "Eurostile",

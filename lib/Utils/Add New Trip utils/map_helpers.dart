@@ -99,6 +99,7 @@ Future<LatLng?> determinePosition(
   bool shouldShowMarker = true, // NEW PARAMETER
 }) async {
   try {
+    // ignore: unused_local_variable
     LocationPermission permission = await Geolocator.requestPermission();
     Position position = await Geolocator.getCurrentPosition();
     LatLng currentLocation = LatLng(position.latitude, position.longitude);

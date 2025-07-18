@@ -138,17 +138,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   if (activeTrip) {
                     showDialog(
                       context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text("Active Trip Exists"),
-                        content: const Text(
-                          "You already have an active trip. Please complete it before starting a new one.",
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("OK"),
+                      builder: (_) => Dialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: const BorderSide(
+                            color: AppColors.lightBlueColor,
+                            width: 1,
                           ),
-                        ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 24,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Active Trip Exists',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: AppColors.darkBlueColor,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'You already have an active trip. Please complete it before starting a new one.',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: ElevatedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.lightBlueColor,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                  ),
+                                  child: const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 18,
+                                      vertical: 10,
+                                    ),
+                                    child: Text(
+                                      'OK',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   } else {
@@ -247,10 +298,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 final trips = snapshot.data!;
                 trips.sort((a, b) {
-                  if (a['status'] == 'ACTIVE' && b['status'] != 'ACTIVE')
+                  if (a['status'] == 'ACTIVE' && b['status'] != 'ACTIVE') {
                     return -1;
-                  if (a['status'] != 'ACTIVE' && b['status'] == 'ACTIVE')
+                  }
+                  if (a['status'] != 'ACTIVE' && b['status'] == 'ACTIVE') {
                     return 1;
+                  }
                   return 0;
                 });
 

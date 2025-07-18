@@ -36,7 +36,7 @@ class _PlanTripScreenState extends State<PlanTripScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
+                            children: const [
                               Text(
                                 "PLAN TRIPS",
                                 style: TextStyle(

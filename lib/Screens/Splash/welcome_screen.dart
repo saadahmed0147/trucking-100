@@ -61,9 +61,9 @@ class WelcomeScreen extends StatelessWidget {
 
                         // Info Rows
                         Row(
-                          children: [
+                          children: const [
                             Padding(
-                              padding: const EdgeInsets.all(20),
+                              padding: EdgeInsets.all(20),
                               child: Icon(
                                 Icons.groups_outlined,
                                 size: 40,
@@ -84,9 +84,9 @@ class WelcomeScreen extends StatelessWidget {
                           ],
                         ),
                         Row(
-                          children: [
+                          children: const [
                             Padding(
-                              padding: const EdgeInsets.all(20),
+                              padding: EdgeInsets.all(20),
                               child: Icon(
                                 Icons.favorite,
                                 size: 40,

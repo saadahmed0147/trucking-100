@@ -34,7 +34,7 @@ class _GetUpdatedScreenState extends State<GetUpdatedScreen> {
                         // Heading Texts
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Column(
+                          child: const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(

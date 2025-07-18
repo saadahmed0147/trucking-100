@@ -290,21 +290,100 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () async {
                 final confirm = await showDialog<bool>(
                   context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Confirm Logout'),
-                    content: const Text('Are you sure you want to logout?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancel'),
+                  builder: (context) => Dialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(
+                        color: AppColors.lightBlueColor,
+                        width: 1,
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text('Logout'),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 24,
                       ),
-                    ],
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Confirm Logout',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: AppColors.darkBlueColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Are you sure you want to logout?',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              OutlinedButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(
+                                    color: AppColors.lightBlueColor,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  child: Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      color: AppColors.darkBlueColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              ElevatedButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.lightBlueColor,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 10,
+                                  ),
+                                  child: Text(
+                                    'Logout',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
+
                 if (confirm == true) {
                   await FirebaseAuth.instance.signOut();
                   if (mounted) {

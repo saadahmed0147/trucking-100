@@ -29,7 +29,7 @@ class NavigateScreen extends StatelessWidget {
                         // Heading Texts
                         Padding(
                           padding: const EdgeInsets.only(left: 20),
-                          child: Column(
+                          child: const Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(

@@ -7,7 +7,7 @@ import 'package:fuel_route/Screens/Home/Trip/calculator_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/main.dart';
-import 'package:fuel_route/map_api_key.dart';
+import 'package:fuel_route/api_keys.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -53,7 +53,7 @@ class _AddNewTripState extends State<AddNewTrip> {
   @override
   void dispose() {
     _debounce?.cancel();
-    super.dispose();  
+    super.dispose();
   }
 
   void getCurrentLocation() async {
@@ -73,6 +73,7 @@ class _AddNewTripState extends State<AddNewTrip> {
         });
       },
       shouldShowMarker:
+          // ignore: unrelated_type_equality_checks
           _pickupController == false || destination == null, // ✅ ONLY IF needed
     );
 
@@ -357,8 +358,9 @@ class _AddNewTripState extends State<AddNewTrip> {
                                     p['description'] == _pickupController.text,
                                 orElse: () => null,
                               );
-                              if (match != null)
+                              if (match != null) {
                                 pickupPlaceId = match['place_id'];
+                              }
                             }
                             if (_destinationPredictions.isNotEmpty) {
                               final match = _destinationPredictions.firstWhere(
@@ -367,8 +369,9 @@ class _AddNewTripState extends State<AddNewTrip> {
                                     _destinationController.text,
                                 orElse: () => null,
                               );
-                              if (match != null)
+                              if (match != null) {
                                 destinationPlaceId = match['place_id'];
+                              }
                             }
                             // If not found, fallback to current values
                             if (pickupPlaceId != null) {

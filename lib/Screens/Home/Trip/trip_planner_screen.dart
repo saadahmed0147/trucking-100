@@ -218,11 +218,18 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        const Icon(
-                                          Icons.location_on,
-                                          color: Colors.blueAccent,
-                                          size: 20,
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 5,
+                                           ),
+                                          child: const Icon(
+                                            Icons.location_on,
+                                            color: Colors.blueAccent,
+                                            size: 20,
+                                          ),
                                         ),
                                         const SizedBox(width: 15),
                                         Expanded(

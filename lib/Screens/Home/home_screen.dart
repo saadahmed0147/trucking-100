@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:fuel_route/Screens/Home/Dashboard/dashboard_screen.dart';
 import 'package:fuel_route/Screens/Home/Trip/trip_planner_screen.dart';
 import 'package:fuel_route/Screens/Home/ai_tips_screen.dart';
 import 'package:fuel_route/Screens/Home/history_dashboard_screen.dart';
-import 'package:fuel_route/Screens/Home/settings.dart';
+import 'package:fuel_route/Screens/Home/Settings/settings.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -33,10 +34,10 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   final List<String> _iconPaths = [
-    "assets/images/bottom-bar-icon/dashboard-icon.png",
-    "assets/images/bottom-bar-icon/trip-icon.png",
-    "assets/images/bottom-bar-icon/history-icon.png",
-    "assets/images/bottom-bar-icon/ai-icon.png",
+    "assets/images/bottom-bar-icon/dashboard-icon.svg",
+    "assets/images/bottom-bar-icon/trip-icon.svg",
+    "assets/images/bottom-bar-icon/history-icon.svg",
+    "assets/images/bottom-bar-icon/ai-icon.svg",
     "assets/images/bottom-bar-icon/setting-icon.png",
   ];
 
@@ -86,14 +87,24 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset(
-                    _iconPaths[index],
-                    height: 30,
-                    width: 30,
-                    color: isSelected
-                        ? AppColors.lightBlueColor
-                        : AppColors.blackColor,
-                  ),
+                  _iconPaths[index].endsWith('.svg')
+                      ? SvgPicture.asset(
+                          _iconPaths[index],
+                          height: 30,
+                          width: 30,
+                          color: isSelected
+                              ? AppColors.lightBlueColor
+                              : AppColors.blackColor,
+                        )
+                      : Image.asset(
+                          _iconPaths[index],
+                          height: 30,
+                          width: 30,
+                          color: isSelected
+                              ? AppColors.lightBlueColor
+                              : AppColors.blackColor,
+                        ),
+
                   const SizedBox(height: 4),
                   Text(
                     _titles[index],

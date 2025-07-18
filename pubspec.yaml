@@ -57,6 +57,7 @@ dependencies:
   google_generative_ai: ^0.4.7
   # flutter_tts: ^4.2.3
   location: ^8.0.1
+  flutter_svg: ^2.2.0
 
 dev_dependencies:
   flutter_test:
@@ -92,11 +93,10 @@ flutter:
     - assets/images/navigate-image.png
     - assets/images/plan-trip-image.png
     - assets/images/trip-image.png
-    - assets/images/bottom-bar-icon/account-icon.png
-    - assets/images/bottom-bar-icon/ai-icon.png
-    - assets/images/bottom-bar-icon/dashboard-icon.png
-    - assets/images/bottom-bar-icon/history-icon.png
-    - assets/images/bottom-bar-icon/trip-icon.png
+    - assets/images/bottom-bar-icon/ai-icon.svg
+    - assets/images/bottom-bar-icon/dashboard-icon.svg
+    - assets/images/bottom-bar-icon/history-icon.svg
+    - assets/images/bottom-bar-icon/trip-icon.svg
     - assets/images/bottom-bar-icon/setting-icon.png
     - assets/categories-icons/
 

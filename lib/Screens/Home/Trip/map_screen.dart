@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/navigation_screen.dart';
@@ -81,7 +83,7 @@ class _MapScreenState extends State<MapScreen> {
     );
     markers.add(
       Marker(
-        markerId: const MarkerId('destination'),
+        markerId: MarkerId("destination"),
         position: destination!,
         infoWindow: const InfoWindow(title: 'Destination'),
       ),
@@ -377,6 +379,17 @@ class _MapScreenState extends State<MapScreen> {
                                       ? polylineCoordinates
                                       : null,
                                 );
+
+                                // Zoom to fit all markers
+                                if (newCategoryMarkers.isNotEmpty) {
+                                  LatLngBounds bounds = _calculateBounds(
+                                    newCategoryMarkers,
+                                  );
+                                  final controller = await _controller.future;
+                                  controller.animateCamera(
+                                    CameraUpdate.newLatLngBounds(bounds, 50),
+                                  );
+                                }
                               }
 
                               markers.removeWhere(
@@ -631,4 +644,109 @@ class _MapScreenState extends State<MapScreen> {
     }
     return "Current Location";
   }
+
+  Future<void> fetchNearbyPlaces({
+    required Map<String, dynamic> category,
+    required LatLng? origin,
+    required LatLng? destination,
+    required LatLng? currentLocation,
+    required String apiKey,
+    required Set<Marker> markers,
+    required Function(Set<Marker>) onMarkersUpdated,
+    List<LatLng>? routePolyline,
+  }) async {
+    try {
+      if (origin == null || destination == null) {
+        debugPrint("Origin or destination is null. Cannot fetch places.");
+        return;
+      }
+
+      final queryParam = category.containsKey('types')
+          ? 'type=${category['types']}'
+          : 'keyword=${category['keyword']}';
+
+      final url =
+          'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${origin.latitude},${origin.longitude}&radius=8000&$queryParam&key=$apiKey';
+      debugPrint("Fetching places from URL: $url");
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode != 200) {
+        debugPrint(
+          "Failed to fetch places. Status code: ${response.statusCode}",
+        );
+        return;
+      }
+
+      final data = jsonDecode(response.body);
+      if (data['results'] == null || data['results'].isEmpty) {
+        debugPrint("No places found for the selected category.");
+        return;
+      }
+
+      // Remove previous POI markers
+      markers.removeWhere((m) => m.markerId.value.startsWith("poi_"));
+
+      // Use high-resolution marker icon (e.g., 96px)
+      final BitmapDescriptor customIcon = await getResizedMarker(
+        category['iconPath'],
+        96, // You can increase this to 120, 150, etc.
+      );
+
+      for (var place in data['results']) {
+        final lat = place['geometry']['location']['lat'];
+        final lng = place['geometry']['location']['lng'];
+        final name = place['name'];
+
+        markers.add(
+          Marker(
+            markerId: MarkerId("poi_${place['place_id']}"),
+            position: LatLng(lat, lng),
+            infoWindow: InfoWindow(title: name),
+            icon: customIcon,
+          ),
+        );
+      }
+
+      debugPrint("Markers added: ${markers.length}");
+      onMarkersUpdated(markers);
+    } catch (e) {
+      debugPrint("Error fetching nearby places: $e");
+    }
+  }
+}
+
+Future<BitmapDescriptor> getResizedMarker(String assetPath, int width) async {
+  final ByteData data = await rootBundle.load(assetPath);
+  final codec = await ui.instantiateImageCodec(
+    data.buffer.asUint8List(),
+    targetWidth: width,
+  );
+  final frame = await codec.getNextFrame();
+  final image = await frame.image.toByteData(format: ui.ImageByteFormat.png);
+  return BitmapDescriptor.fromBytes(image!.buffer.asUint8List());
+}
+
+LatLngBounds _calculateBounds(Set<Marker> markers) {
+  double? minLat, maxLat, minLng, maxLng;
+
+  for (var marker in markers) {
+    if (minLat == null || marker.position.latitude < minLat) {
+      minLat = marker.position.latitude;
+    }
+    if (maxLat == null || marker.position.latitude > maxLat) {
+      maxLat = marker.position.latitude;
+    }
+    if (minLng == null || marker.position.longitude < minLng) {
+      minLng = marker.position.longitude;
+    }
+    if (maxLng == null || marker.position.longitude > maxLng) {
+      maxLng = marker.position.longitude;
+    }
+  }
+
+  return LatLngBounds(
+    southwest: LatLng(minLat!, minLng!),
+    northeast: LatLng(maxLat!, maxLng!),
+  );
 }

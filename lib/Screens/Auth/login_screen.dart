@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 60),
@@ -111,18 +111,31 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 30),
+                  padding: EdgeInsets.all(40),
                   child: Text(
                     textAlign: TextAlign.center,
-                    'We will send your package or anything to your destination We will send your package or anything to your destination We will ckage or anything to your destination We will send your package or anything to your destination.',
+                    'Sign in With Your Account',
                     style: TextStyle(
+                      fontSize: 25,
+                      color: AppColors.whiteColor,
                       fontFamily: "Eurostile",
-                      fontSize: 14,
-                      fontWeight: FontWeight.normal,
-                      color: AppColors.greyColor,
                     ),
                   ),
                 ),
+                SizedBox(height: 20),
+                // const Padding(
+                //   padding: EdgeInsets.symmetric(vertical: 30),
+                //   child: Text(
+                //     textAlign: TextAlign.center,
+                //     "Trucking 100 is a smart assistant for truck drivers,offering AI-powered trip planning, fuel management,and real-time insights to boost efficiency on the road.",
+                //     style: TextStyle(
+                //       fontFamily: "Eurostile",
+                //       fontSize: 14,
+                //       fontWeight: FontWeight.normal,
+                //       color: AppColors.greyColor,
+                //     ),
+                //   ),
+                // ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

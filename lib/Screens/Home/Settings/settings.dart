@@ -483,7 +483,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                        children: [   
                           Text(
                             'Confirm Logout',
                             style: TextStyle(

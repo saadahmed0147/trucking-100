@@ -318,7 +318,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
                           SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Unable to fetch route. Please check API key configuration.',
+                              'Unable to fetch route.',
                               style: TextStyle(color: Colors.white),
                             ),
                           ),

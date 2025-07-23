@@ -23,10 +23,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         return macos;
       case TargetPlatform.windows:
@@ -65,6 +62,15 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyBjQbB7cER_BC9HFxO_4RpenHnVD-QgGO4',
+    appId: '1:801099113858:ios:c4ccf2e836c12063bbdb9b',
+    messagingSenderId: '801099113858',
+    projectId: 'trucking-100-5223c',
+    storageBucket: 'trucking-100-5223c.firebasestorage.app',
+    iosBundleId: 'com.example.fuelRoute',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBjQbB7cER_BC9HFxO_4RpenHnVD-QgGO4',
     appId: '1:801099113858:ios:c4ccf2e836c12063bbdb9b',
     messagingSenderId: '801099113858',

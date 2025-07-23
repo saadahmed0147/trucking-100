@@ -65,7 +65,7 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  ios: false
+  ios: true
   image_path: "assets/images/logo.png"
   background_color: "#08080A"
   # The "flutter_lints" package below contains a set of recommended lints to

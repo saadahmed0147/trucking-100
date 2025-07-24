@@ -233,10 +233,10 @@ Keep it concise and practical.
                       onRefresh: () async {
                         await fetchLatestTripAndGenerateTips(isRefresh: true);
                       },
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 30),
-                        child: SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 30),
                           child: Stack(
                             children: [
                               Container(
@@ -331,33 +331,6 @@ Keep it concise and practical.
                                       )
                                     : const Text("No tips available."),
                               ),
-                              if (isRefreshing)
-                                Positioned(
-                                  top: 10,
-                                  right: 10,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                          color: Colors.black12,
-                                          blurRadius: 4,
-                                          offset: Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.lightBlueColor,
-                                      ),
-                                    ),
-                                  ),
-                                ),
                             ],
                           ),
                         ),

@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 // import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:fuel_route/Routes/route_names.dart';
+import 'package:fuel_route/Screens/Home/home_screen.dart';
 import 'package:fuel_route/Utils/utils.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -114,7 +115,13 @@ class AuthService {
         success: true,
       );
 
-      Navigator.pushReplacementNamed(context, RouteNames.homeScreen);
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(),
+        ), // Replace with your HomeScreen widget
+        (route) => false, // This removes all previous routes
+      );
       return res;
     } catch (e) {
       debugPrint('🔥 Google Sign-In Error: $e');
@@ -170,7 +177,13 @@ class AuthService {
           context,
           success: true,
         );
-        Navigator.pushNamed(context, RouteNames.homeScreen);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(),
+          ), // Replace with your HomeScreen widget
+          (route) => false, // This removes all previous routes
+        );
       }
     } on FirebaseAuthException catch (e) {
       debugPrint("🔥 FirebaseAuthException: ${e.code} - ${e.message}");
@@ -220,7 +233,13 @@ class AuthService {
           success: true,
         );
         Utils.flushBarErrorMessage(user.email ?? '', context);
-        Navigator.pushReplacementNamed(context, RouteNames.homeScreen);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(),
+          ), // Replace with your HomeScreen widget
+          (route) => false, // This removes all previous routes
+        );
       }
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {

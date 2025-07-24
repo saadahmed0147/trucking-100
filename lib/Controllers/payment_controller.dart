@@ -68,7 +68,7 @@ class PaymentController {
     }
 
     // Update subscription in Firebase
-    final userId = 'userId'; // Replace with actual user ID
+    const userId = 'userId'; // Replace with actual user ID
     await _dbRef.child('users/$userId/subscription').set({
       'plan': plan,
       'remainingTrips': trips,

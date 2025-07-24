@@ -3,10 +3,11 @@ on:
     branches:
       - main
 
-name: "Android Build & Release"
+name: "Android & iOS Build"
 
 jobs:
-  build:
+  android-build:
+    name: Build Android APK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,7 +22,7 @@ jobs:
           channel: "stable"
 
       - run: flutter pub get
-      # - run: flutter build apk --release --split-per-abi
+      - run: flutter build apk --release --split-per-abi
 
       - name: Upload APK to GitHub Release
         uses: ncipollo/release-action@v1
@@ -29,3 +30,39 @@ jobs:
           artifacts: build/app/outputs/apk/release/*.apk
           tag: v1.0.${{ github.run_number }}
           token: ${{ secrets.TOKEN }}
+
+  ios-build:
+    name: Build iOS IPA
+    runs-on: macos-latest
+    needs: android-build # Optional: run after Android build
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+
+      - run: flutter pub get
+
+      # Set up code signing
+      - name: Set up signing certificate
+        run: |
+          echo "$CERTIFICATE_P12" | base64 --decode > certificate.p12
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import certificate.p12 -k build.keychain -P "${{ secrets.CERT_PASSWORD }}" -T /usr/bin/codesign
+
+      - name: Set up provisioning profile
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$PROVISIONING_PROFILE" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      - name: Build IPA
+        run: flutter build ipa --release
+
+      - name: Upload IPA to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: iOS-IPA
+          path: build/ios/ipa/*.ipa

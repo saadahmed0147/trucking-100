@@ -53,5 +53,29 @@
 	<string>We need camera access for profile pictures.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need access to your photo library for uploading images.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.googleusercontent.apps.801099113858-pnh35j34gcnnqn768no65g1f36j4du7q</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.801099113858-pnh35j34gcnnqn768no65g1f36j4du7q</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>googlegmail</string>
+		<string>googlemail</string>
+		<string>googleplus</string>
+		<string>googledrive</string>
+		<string>googlephotos</string>
+		<string>googleearth</string>
+		<string>googleyoutube</string>
+		<string>googlemaps</string>
+		<string>googleplaymovies</string>
+		<string>googlevoice</string>
+	</array>
 </dict>
 </plist>

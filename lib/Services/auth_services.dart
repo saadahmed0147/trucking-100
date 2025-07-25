@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 // import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:fuel_route/Routes/route_names.dart';
-import 'package:fuel_route/Screens/Home/home_screen.dart';
 import 'package:fuel_route/Utils/utils.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -72,7 +72,15 @@ class AuthService {
     onStart();
 
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        // Add web client ID for better Android compatibility
+        serverClientId:
+            '801099113858-li096tuqub4uql1fca6d0q94642ad09v.apps.googleusercontent.com',
+        // Add iOS client ID for better iOS compatibility
+        clientId: Platform.isIOS
+            ? '801099113858-pnh35j34gcnnqn768no65g1f36j4du7q.apps.googleusercontent.com'
+            : null,
+      );
 
       // Ensure previous account is signed out to trigger chooser
       await googleSignIn.signOut();
@@ -115,17 +123,34 @@ class AuthService {
         success: true,
       );
 
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(),
-        ), // Replace with your HomeScreen widget
+        RouteNames.homeScreen,
+        // Replace with your HomeScreen widget
         (route) => false, // This removes all previous routes
       );
       return res;
     } catch (e) {
       debugPrint('🔥 Google Sign-In Error: $e');
-      Utils.flushBarErrorMessage('Google Sign-In failed: $e', context);
+
+      if (Platform.isIOS && e.toString().contains('network_error')) {
+        Utils.flushBarErrorMessage(
+          'Network error on iOS. Please check your internet connection.',
+          context,
+        );
+      } else if (Platform.isIOS && e.toString().contains('sign_in_failed')) {
+        Utils.flushBarErrorMessage(
+          'iOS Google Sign-In failed. Please check URL schemes in Info.plist.',
+          context,
+        );
+      } else if (e.toString().contains('ApiException: 10')) {
+        Utils.flushBarErrorMessage(
+          'Google Sign-In configuration error. Please check SHA-1 fingerprint in Firebase Console.',
+          context,
+        );
+      } else {
+        Utils.flushBarErrorMessage('Google Sign-In failed: $e', context);
+      }
       return null;
     } finally {
       onComplete();
@@ -177,11 +202,10 @@ class AuthService {
           context,
           success: true,
         );
-        Navigator.pushAndRemoveUntil(
+        Navigator.pushNamedAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(),
-          ), // Replace with your HomeScreen widget
+          RouteNames.homeScreen,
+          // Replace with your HomeScreen widget
           (route) => false, // This removes all previous routes
         );
       }
@@ -233,11 +257,10 @@ class AuthService {
           success: true,
         );
         Utils.flushBarErrorMessage(user.email ?? '', context);
-        Navigator.pushAndRemoveUntil(
+        Navigator.pushNamedAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(),
-          ), // Replace with your HomeScreen widget
+          RouteNames.homeScreen,
+          // Replace with your HomeScreen widget
           (route) => false, // This removes all previous routes
         );
       }

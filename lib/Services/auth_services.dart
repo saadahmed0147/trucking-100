@@ -5,7 +5,6 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 // import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:fuel_route/Routes/route_names.dart';
-import 'package:fuel_route/Screens/Home/home_screen.dart';
 import 'package:fuel_route/Utils/utils.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -124,11 +123,10 @@ class AuthService {
         success: true,
       );
 
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(),
-        ), // Replace with your HomeScreen widget
+        RouteNames.homeScreen,
+        // Replace with your HomeScreen widget
         (route) => false, // This removes all previous routes
       );
       return res;
@@ -204,11 +202,10 @@ class AuthService {
           context,
           success: true,
         );
-        Navigator.pushAndRemoveUntil(
+        Navigator.pushNamedAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(),
-          ), // Replace with your HomeScreen widget
+          RouteNames.homeScreen,
+          // Replace with your HomeScreen widget
           (route) => false, // This removes all previous routes
         );
       }
@@ -260,11 +257,10 @@ class AuthService {
           success: true,
         );
         Utils.flushBarErrorMessage(user.email ?? '', context);
-        Navigator.pushAndRemoveUntil(
+        Navigator.pushNamedAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(),
-          ), // Replace with your HomeScreen widget
+          RouteNames.homeScreen,
+          // Replace with your HomeScreen widget
           (route) => false, // This removes all previous routes
         );
       }

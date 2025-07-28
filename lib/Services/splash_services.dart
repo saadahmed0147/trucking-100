@@ -3,9 +3,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fuel_route/Routes/route_names.dart';
-import 'package:fuel_route/Screens/Auth/login_screen.dart';
-import 'package:fuel_route/Screens/Home/home_screen.dart';
-import 'package:fuel_route/Screens/Splash/welcome_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashServices {
@@ -18,31 +15,28 @@ class SplashServices {
     // First time opening app ever
     if (isFirstLaunch) {
       await prefs.setBool('isFirstLaunch', false); // mark as not first
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => WelcomeScreen(),
-        ), // Replace with your HomeScreen widget
+        RouteNames.welcomeScreen,
+        // Replace with your WelcomeScreen widget
         (route) => false, // This removes all previous routes
       );
     }
     // Opened before but not logged in
     else if (user == null) {
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => LoginScreen(),
-        ), // Replace with your HomeScreen widget
+        RouteNames.loginScreen,
+        // Replace with your LoginScreen widget
         (route) => false, // This removes all previous routes
       );
     }
     // Already logged in
     else {
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(),
-        ), // Replace with your HomeScreen widget
+        RouteNames.homeScreen,
+        // Replace with your HomeScreen widget
         (route) => false, // This removes all previous routes
       );
     }

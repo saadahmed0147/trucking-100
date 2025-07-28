@@ -30,7 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final snapshot = await dbRef.get();
     if (snapshot.exists) {
       final data = Map<String, dynamic>.from(snapshot.value as Map);
-      nameController.text = data['name'] ?? '';
+      nameController.text = user.displayName ?? '';
       emailController.text = data['email'] ?? user.email ?? '';
       phoneController.text = data['phone'] ?? '';
     } else {
@@ -41,18 +41,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> updateUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-    final dbRef = FirebaseDatabase.instance.ref('users/${user.uid}');
-    await dbRef.update({
-      'name': nameController.text,
-      'email': emailController.text,
-      'phone': phoneController.text,
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile updated!'),
-        backgroundColor: AppColors.lightBlueColor,
-      ),
-    );
+
+    try {
+      // Update the display name in FirebaseAuth
+      await user.updateDisplayName(nameController.text);
+
+      // Update the user data in Firebase Realtime Database
+      final dbRef = FirebaseDatabase.instance.ref('users/${user.uid}');
+      await dbRef.update({
+        'name': nameController.text,
+        'email': emailController.text,
+        'phone': phoneController.text,
+      });
+
+      // Reload the user to ensure the changes are reflected
+      await user.reload();
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile updated!'),
+          backgroundColor: AppColors.lightBlueColor,
+        ),
+      );
+    } catch (e) {
+      // Handle errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update profile: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override

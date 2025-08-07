@@ -151,18 +151,50 @@ class _AddNewTripState extends State<AddNewTrip> {
     if (input.isEmpty) return;
 
     final url =
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey&components=country:pk';
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey&components=country:us';
 
-    final response = await http.get(Uri.parse(url));
-    final data = jsonDecode(response.body);
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-    setState(() {
-      if (isPickup) {
-        _pickupPredictions = data['predictions'];
+        if (data['status'] == 'OK') {
+          setState(() {
+            if (isPickup) {
+              _pickupPredictions = data['predictions'];
+            } else {
+              _destinationPredictions = data['predictions'];
+            }
+          });
+        } else {
+          debugPrint("Error: ${data['status']} - ${data['error_message']}");
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(
+          //     content: Text(
+          //       'Error: ${data['status']} - ${data['error_message'] ?? 'Unknown error'}',
+          //     ),
+          //     backgroundColor: Colors.red,
+          //   ),
+          // );
+        }
       } else {
-        _destinationPredictions = data['predictions'];
+        debugPrint("HTTP Error: ${response.statusCode}");
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text('HTTP Error: ${response.statusCode}'),
+        //     backgroundColor: Colors.red,
+        //   ),
+        // );
       }
-    });
+    } catch (e) {
+      debugPrint("Exception: $e");
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(
+      //     content: Text('An error occurred: $e'),
+      //     backgroundColor: Colors.red,
+      //   ),
+      // );
+    }
   }
 
   Future<void> _getPlaceLatLng(String placeId, bool isPickup) async {

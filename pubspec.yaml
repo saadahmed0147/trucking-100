@@ -58,6 +58,8 @@ dependencies:
   # flutter_tts: ^4.2.3
   location: ^8.0.1
   flutter_svg: ^2.2.0
+  firebase_crashlytics: ^4.3.10
+  # purchases_flutter: ^9.1.0
 
 dev_dependencies:
   flutter_test:

@@ -45,3 +45,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 # lib/api_keys.dart
+/admin-panel/node_modules/
+/admin-panel/.next/
+/admin-panel/out/
+/admin-panel/build/
+/admin-panel/dist/
+/admin-panel/.env*
+/admin-panel/*.log
+/admin-panel/.vercel/
+/admin-panel/*.tsbuildinfo

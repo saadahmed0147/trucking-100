@@ -1,11 +1,15 @@
+
 // Firebase configuration and services
 import { initializeApp } from 'firebase/app'
 import { getDatabase, ref, get, onValue, DatabaseReference } from 'firebase/database'
+import { getAuth } from 'firebase/auth'
 import { firebaseConfig, DB_PATHS } from './firebase-config'
+
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 export const database = getDatabase(app)
+export const auth = getAuth(app)
 
 // Types based on your Firebase data structure
 export interface Trip {

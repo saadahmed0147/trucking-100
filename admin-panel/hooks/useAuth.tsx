@@ -1,206 +1,90 @@
-'use client'
+'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect, useContext, createContext } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
-export interface User {
-  email: string
-  role: 'admin'
-  name: string
-  id: string
+interface AuthContextType {
+  user: FirebaseUser | null;
+  isLoading: boolean;
+  error: string | null;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  clearError: () => void;
 }
 
-export interface AuthState {
-  user: User | null
-  isLoading: boolean
-  isAuthenticated: boolean
-  error: string | null
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  return context;
 }
 
-export interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  logout: () => void
-  clearError: () => void
-}
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
-
-interface AuthProviderProps {
-  children: ReactNode
-}
-
-// Admin credentials (in production, this should come from environment variables)
-const ADMIN_CREDENTIALS = {
-  email: 'admin@trucking.com',
-  password: 'admin123',
-  name: 'Admin User',
-  role: 'admin' as const,
-  id: 'admin-001'
-}
-
-const STORAGE_KEYS = {
-  USER: 'trucking_admin_user',
-  TOKEN: 'trucking_admin_token',
-  EXPIRES_AT: 'trucking_admin_expires_at'
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    isLoading: true,
-    isAuthenticated: false,
-    error: null
-  })
-
-  const router = useRouter()
-
-  // Check for existing session on mount
+  // Monitor user authentication state
   useEffect(() => {
-    checkExistingSession()
-  }, [])
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
-  const checkExistingSession = async () => {
+  // Handle login
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      if (typeof window === 'undefined') {
-        setAuthState(prev => ({ ...prev, isLoading: false }))
-        return
+      if (email.toLowerCase() !== 'admin@trucking.com') {
+        throw new Error('Access denied: Only admin can log in.');
       }
 
-      const storedUser = localStorage.getItem(STORAGE_KEYS.USER)
-      const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN)
-      const expiresAt = localStorage.getItem(STORAGE_KEYS.EXPIRES_AT)
-
-      if (!storedUser || !storedToken || !expiresAt) {
-        setAuthState(prev => ({ ...prev, isLoading: false }))
-        return
-      }
-
-      // Check if session has expired
-      if (Date.now() > parseInt(expiresAt)) {
-        clearStoredSession()
-        setAuthState(prev => ({ ...prev, isLoading: false }))
-        return
-      }
-
-      const userData: User = JSON.parse(storedUser)
-      
-      // Validate user data
-      if (userData.email === ADMIN_CREDENTIALS.email && userData.role === 'admin') {
-        setAuthState({
-          user: userData,
-          isLoading: false,
-          isAuthenticated: true,
-          error: null
-        })
-      } else {
-        clearStoredSession()
-        setAuthState(prev => ({ ...prev, isLoading: false }))
-      }
-    } catch (error) {
-      console.error('Session check error:', error)
-      clearStoredSession()
-      setAuthState(prev => ({ ...prev, isLoading: false, error: 'Session validation failed' }))
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push('/dashboard');
+      return { success: true };
+    } catch (err: any) {
+      const message =
+        err.code === 'auth/invalid-credential'
+          ? 'Invalid email or password.'
+          : err.message || 'Login failed.';
+      setError(message);
+      return { success: false, error: message };
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    setAuthState(prev => ({ ...prev, isLoading: true, error: null }))
+  // Handle logout
+  const logout = async () => {
+    setIsLoading(true);
+    await signOut(auth);
+    setUser(null);
+    setIsLoading(false);
+    router.push('/login');
+  };
 
-    try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
+  const clearError = () => setError(null);
 
-      // Validate credentials
-      if (email.toLowerCase() !== ADMIN_CREDENTIALS.email.toLowerCase()) {
-        setAuthState(prev => ({ ...prev, isLoading: false }))
-        return { success: false, error: 'Access denied. Only admin@trucking.com is allowed.' }
-      }
-
-      if (password !== ADMIN_CREDENTIALS.password) {
-        setAuthState(prev => ({ ...prev, isLoading: false }))
-        return { success: false, error: 'Invalid password. Please try again.' }
-      }
-
-      // Create user session
-      const userData: User = {
-        email: ADMIN_CREDENTIALS.email,
-        role: ADMIN_CREDENTIALS.role,
-        name: ADMIN_CREDENTIALS.name,
-        id: ADMIN_CREDENTIALS.id
-      }
-
-      const token = generateToken(userData)
-      const expiresAt = Date.now() + (24 * 60 * 60 * 1000) // 24 hours
-
-      // Store in localStorage
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData))
-      localStorage.setItem(STORAGE_KEYS.TOKEN, token)
-      localStorage.setItem(STORAGE_KEYS.EXPIRES_AT, expiresAt.toString())
-
-      setAuthState({
-        user: userData,
-        isLoading: false,
-        isAuthenticated: true,
-        error: null
-      })
-
-      return { success: true }
-    } catch (error) {
-      console.error('Login error:', error)
-      setAuthState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: 'Login failed. Please try again.' 
-      }))
-      return { success: false, error: 'Login failed. Please try again.' }
-    }
-  }
-
-  const logout = () => {
-    clearStoredSession()
-    setAuthState({
-      user: null,
-      isLoading: false,
-      isAuthenticated: false,
-      error: null
-    })
-    router.push('/login')
-  }
-
-  const clearError = () => {
-    setAuthState(prev => ({ ...prev, error: null }))
-  }
-
-  const clearStoredSession = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEYS.USER)
-      localStorage.removeItem(STORAGE_KEYS.TOKEN)
-      localStorage.removeItem(STORAGE_KEYS.EXPIRES_AT)
-    }
-  }
-
-  const generateToken = (user: User): string => {
-    return btoa(`${user.email}:${user.id}:${Date.now()}:${Math.random()}`)
-  }
-
-  const contextValue: AuthContextType = {
-    ...authState,
-    login,
-    logout,
-    clearError
-  }
+  const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider
+      value={{ user, isLoading, error, isAuthenticated, login, logout, clearError }}
+    >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }

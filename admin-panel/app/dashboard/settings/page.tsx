@@ -9,6 +9,8 @@ import {
   Mail,
   Lock
 } from 'lucide-react'
+import { auth } from '@/lib/firebase'
+import { updateEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth'
 
 interface ProfileData {
   email: string
@@ -24,7 +26,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false)
   
   const [profileData, setProfileData] = useState<ProfileData>({
-    email: 'admin@trucking.com',
+    email: auth.currentUser?.email || '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
@@ -39,24 +41,45 @@ export default function SettingsPage() {
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!auth.currentUser) {
+      alert('No user is logged in.')
+      return
+    }
+
+    if (profileData.newPassword && profileData.newPassword !== profileData.confirmPassword) {
+      alert('New password and confirmation do not match.')
+      return
+    }
+
     setLoading(true)
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      console.log('Profile update:', profileData)
+      // Reauthenticate user
+      const credential = EmailAuthProvider.credential(
+        auth.currentUser.email || '',
+        profileData.currentPassword
+      )
+      await reauthenticateWithCredential(auth.currentUser, credential)
+
+      // Update email if changed
+      if (profileData.email !== auth.currentUser.email) {
+        await updateEmail(auth.currentUser, profileData.email)
+      }
+
+      // Update password if provided
+      if (profileData.newPassword) {
+        await updatePassword(auth.currentUser, profileData.newPassword)
+      }
+
       alert('Profile updated successfully!')
-      
-      // Clear password fields after successful update
       setProfileData(prev => ({
         ...prev,
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       }))
-    } catch (error) {
+    } catch (error: any) {
       console.error('Update error:', error)
-      alert('Failed to update profile')
+      alert(error.message || 'Failed to update profile')
     } finally {
       setLoading(false)
     }
@@ -110,7 +133,7 @@ export default function SettingsPage() {
 
         <div className="p-6">
           <form onSubmit={handleProfileUpdate} className="space-y-6">
-            {/* Email Address */}
+            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Mail className="h-4 w-4 inline mr-1" />
@@ -138,17 +161,14 @@ export default function SettingsPage() {
                   onChange={(e) => handleInputChange('currentPassword', e.target.value)}
                   placeholder="Enter current password"
                   className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
                 />
                 <button
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
-                  {showCurrentPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
+                  {showCurrentPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                 </button>
               </div>
             </div>
@@ -171,16 +191,12 @@ export default function SettingsPage() {
                   onClick={() => setShowNewPassword(!showNewPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
-                  {showNewPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
+                  {showNewPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                 </button>
               </div>
             </div>
 
-            {/* Confirm New Password */}
+            {/* Confirm Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm New Password
@@ -198,16 +214,12 @@ export default function SettingsPage() {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                 </button>
               </div>
             </div>
 
-            {/* Update Button */}
+            {/* Submit Button */}
             <div className="flex justify-end pt-4">
               <button
                 type="submit"

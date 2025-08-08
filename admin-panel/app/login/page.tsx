@@ -32,10 +32,10 @@ export default function LoginPage() {
       return
     }
 
-    if (email !== 'admin@trucking.com') {
-      setError('Access denied. Only admin@trucking.com is allowed.')
-      return
-    }
+    // if (email !== 'admin@trucking.com') {
+    //   setError('Access denied. Only admin@trucking.com is allowed.')
+    //   return
+    // }
 
     setIsSubmitting(true)
 
@@ -112,14 +112,14 @@ export default function LoginPage() {
                 type="email"
                 required
                 className="appearance-none relative block w-full px-4 py-4 border border-white/20 bg-white/10 backdrop-blur-sm placeholder-blue-200 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
-                placeholder="admin@trucking.com"
+                placeholder="abc@example.com "
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isSubmitting}
               />
-              <p className="mt-2 text-xs text-blue-300/70">
+              {/* <p className="mt-2 text-xs text-blue-300/70">
                 Only admin@trucking.com is allowed to access this panel
-              </p>
+              </p> */}
             </div>
 
             {/* Password Field */}
@@ -175,7 +175,7 @@ export default function LoginPage() {
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-8 text-center">
+          {/* <div className="mt-8 text-center">
             <div className="bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-xl p-4">
               <p className="text-xs text-blue-200 font-medium mb-2">
                 <span className="font-semibold">Demo Credentials:</span>
@@ -185,7 +185,7 @@ export default function LoginPage() {
                 <p>Password: admin123</p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}

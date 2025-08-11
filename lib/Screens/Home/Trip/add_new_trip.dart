@@ -176,6 +176,7 @@ class _AddNewTripState extends State<AddNewTrip> {
           //     backgroundColor: Colors.red,
           //   ),
           // );
+          //
         }
       } else {
         debugPrint("HTTP Error: ${response.statusCode}");

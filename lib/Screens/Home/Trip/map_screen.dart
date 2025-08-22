@@ -9,6 +9,7 @@ import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/navigation_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/poi_categories.dart';
+import 'package:fuel_route/Utils/animated_page_route.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/api_keys.dart';
 import 'package:geolocator/geolocator.dart';
@@ -491,19 +492,31 @@ class _MapScreenState extends State<MapScreen> {
         backgroundColor: AppColors.lightBlueColor,
         onPressed: () {
           // Open navigation screen instantly, pass all required trip data
-          Navigator.push(
+
+          navigateWithAnimation(
             context,
-            MaterialPageRoute(
-              builder: (_) => NavigationScreen(
-                tripId: widget.tripId,
-                // Pass pickup/destination for instant display
-                pickupLat: widget.pickupLat,
-                pickupLng: widget.pickupLng,
-                destinationLat: widget.destinationLat,
-                destinationLng: widget.destinationLng,
-              ),
+            NavigationScreen(
+              tripId: widget.tripId,
+              // Pass pickup/destination for instant display
+              pickupLat: widget.pickupLat,
+              pickupLng: widget.pickupLng,
+              destinationLat: widget.destinationLat,
+              destinationLng: widget.destinationLng,
             ),
           );
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: (_) => NavigationScreen(
+          //       tripId: widget.tripId,
+          //       // Pass pickup/destination for instant display
+          //       pickupLat: widget.pickupLat,
+          //       pickupLng: widget.pickupLng,
+          //       destinationLat: widget.destinationLat,
+          //       destinationLng: widget.destinationLng,
+          //     ),
+          //   ),
+          // );
         },
         child: Icon(Icons.directions, color: AppColors.whiteColor),
       ),

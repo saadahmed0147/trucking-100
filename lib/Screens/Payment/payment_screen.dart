@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:fuel_route/Routes/route_names.dart';
+import 'package:fuel_route/Screens/Auth/login_screen.dart';
 import 'package:fuel_route/Screens/Payment/payment_controller.dart';
 import 'package:fuel_route/Screens/Payment/plan_card.dart';
+import 'package:fuel_route/Utils/animated_page_route.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -296,9 +297,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                           TextButton(
                             onPressed: () {
-                              Navigator.pushNamed(
+                              navigateWithAnimation(
                                 context,
-                                RouteNames.loginScreen,
+                                const LoginScreen(),
                               );
                             },
                             child: const Text.rich(

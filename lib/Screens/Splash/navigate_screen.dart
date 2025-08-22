@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fuel_route/Component/round_button.dart';
-import 'package:fuel_route/Routes/route_names.dart';
+import 'package:fuel_route/Screens/Splash/plan_trip_screen.dart';
+import 'package:fuel_route/Utils/animated_page_route.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/main.dart';
 
@@ -82,9 +83,9 @@ class NavigateScreen extends StatelessWidget {
                             child: RoundButton(
                               title: 'Next',
                               onPress: () {
-                                Navigator.pushReplacementNamed(
+                                navigateWithAnimation(
                                   context,
-                                  RouteNames.planTripScreen,
+                                  const PlanTripScreen(),
                                 );
                               },
                               fontSize: 17,

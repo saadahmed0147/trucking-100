@@ -17,12 +17,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late int _selectedIndex; // Trip Planner is initially selected
+  late int _selectedIndex;
 
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialIndex; // ✅ This line is REQUIRED!
+    _selectedIndex = widget.initialIndex;
   }
 
   final List<String> _titles = [
@@ -58,68 +58,159 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: AppColors.splashBgColor,
-        title: const Text(
-          "TRUCKING 100",
-          style: TextStyle(
-            color: AppColors.whiteColor,
-            fontWeight: FontWeight.bold,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.splashBgColor,
+                AppColors.splashBgColor.withOpacity(0.8),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: AppBar(
+            automaticallyImplyLeading: false,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            title: const Text(
+              "TRUCKING 100",
+              style: TextStyle(
+                color: AppColors.whiteColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                letterSpacing: 1.2,
+              ),
+            ),
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 12, top: 4, bottom: 4),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  fit: BoxFit.contain,
+                  width: 50,
+                  height: 50,
+                ),
+              ),
+            ),
           ),
         ),
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Image.asset('assets/images/logo.png'),
-        ),
       ),
-      backgroundColor: AppColors.whiteColor,
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(color: AppColors.whiteColor),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: List.generate(_titles.length, (index) {
-            final isSelected = _selectedIndex == index;
-            return GestureDetector(
-              onTap: () => _onItemTapped(index),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _iconPaths[index].endsWith('.svg')
-                      ? SvgPicture.asset(
-                          _iconPaths[index],
-                          height: 30,
-                          width: 30,
-                          color: isSelected
-                              ? AppColors.lightBlueColor
-                              : AppColors.blackColor,
-                        )
-                      : Image.asset(
-                          _iconPaths[index],
-                          height: 30,
-                          width: 30,
-                          color: isSelected
-                              ? AppColors.lightBlueColor
-                              : AppColors.blackColor,
-                        ),
 
-                  const SizedBox(height: 4),
-                  Text(
-                    _titles[index],
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isSelected
-                          ? AppColors.lightBlueColor
-                          : AppColors.blackColor,
-                    ),
+      /// ✅ AnimatedSwitcher added here
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 400),
+        transitionBuilder: (child, animation) {
+          // Slide + Fade animation
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.1, 0), // from right
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: _screens[_selectedIndex],
+      ),
+
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_titles.length, (index) {
+              final isSelected = _selectedIndex == index;
+
+              return GestureDetector(
+                onTap: () => _onItemTapped(index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSelected ? 16 : 12,
+                    vertical: 8,
                   ),
-                ],
-              ),
-            );
-          }),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.lightBlueColor.withOpacity(0.15)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      AnimatedScale(
+                        scale: isSelected ? 1.2 : 1.0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOutBack,
+                        child: _iconPaths[index].endsWith('.svg')
+                            ? SvgPicture.asset(
+                                _iconPaths[index],
+                                height: 26,
+                                width: 26,
+                                color: isSelected
+                                    ? AppColors.lightBlueColor
+                                    : AppColors.blackColor,
+                              )
+                            : Image.asset(
+                                _iconPaths[index],
+                                height: 26,
+                                width: 26,
+                                color: isSelected
+                                    ? AppColors.lightBlueColor
+                                    : AppColors.blackColor,
+                              ),
+                      ),
+                      if (isSelected) ...[
+                        const SizedBox(width: 6),
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 300),
+                          opacity: 1,
+                          child: Text(
+                            _titles[index],
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.lightBlueColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
         ),
       ),
     );

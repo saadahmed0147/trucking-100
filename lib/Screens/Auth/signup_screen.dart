@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Component/round_textfield.dart';
-import 'package:fuel_route/Routes/route_names.dart';
+import 'package:fuel_route/Screens/Auth/login_screen.dart';
 import 'package:fuel_route/Services/auth_services.dart';
+import 'package:fuel_route/Utils/animated_page_route.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/Utils/utils.dart';
 import 'package:fuel_route/main.dart';
@@ -113,11 +114,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
 
                   const Padding(
-                    padding: EdgeInsets.only(
-                      top: 10,
-                      right: 30,
-                      left: 30,
-                    ),
+                    padding: EdgeInsets.only(top: 10, right: 30, left: 30),
                     child: Text(
                       textAlign: TextAlign.center,
                       'Signup With A New Account',
@@ -288,7 +285,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           overlayColor: Colors.transparent,
                         ),
                         onPressed: () {
-                          Navigator.pushNamed(context, RouteNames.loginScreen);
+                          navigateWithAnimation(context, const LoginScreen());
                         },
                         child: const Text(
                           'Sign In',

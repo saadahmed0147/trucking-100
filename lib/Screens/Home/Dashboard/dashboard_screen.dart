@@ -7,6 +7,7 @@ import 'package:fuel_route/Screens/Home/Dashboard/recent_trip_list.dart';
 import 'package:fuel_route/Screens/Home/Trip/add_new_trip.dart';
 import 'package:fuel_route/Screens/Home/home_screen.dart';
 import 'package:fuel_route/Services/trip_service.dart';
+import 'package:fuel_route/Utils/animated_page_route.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -213,12 +214,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       );
                     } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AddNewTrip(),
-                        ),
-                      );
+                      navigateWithAnimation(context, const AddNewTrip());
                     }
                   },
                 ),
@@ -266,11 +262,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   fontSize: 17,
                   borderRadius: 30,
                   onPress: () {
-                    Navigator.pushReplacement(
+                    navigateWithAnimation(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const HomeScreen(initialIndex: 3),
-                      ),
+                      const HomeScreen(initialIndex: 3),
                     );
                   },
                 ),

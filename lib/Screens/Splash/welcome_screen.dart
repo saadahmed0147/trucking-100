@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fuel_route/Component/round_button.dart';
-import 'package:fuel_route/Routes/route_names.dart';
+import 'package:fuel_route/Screens/Splash/find_places_screen.dart';
+import 'package:fuel_route/Utils/animated_page_route.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/main.dart';
 
@@ -117,9 +118,9 @@ class WelcomeScreen extends StatelessWidget {
                           child: RoundButton(
                             title: 'Get Started',
                             onPress: () {
-                              Navigator.pushReplacementNamed(
+                              navigateWithAnimation(
                                 context,
-                                RouteNames.findPlacesScreen,
+                                FindPlacesScreen(),
                               );
                             },
                             fontSize: 17,

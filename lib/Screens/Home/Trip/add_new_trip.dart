@@ -5,6 +5,7 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/calculator_screen.dart';
 import 'package:fuel_route/Utils/Add%20New%20Trip%20utils/map_helpers.dart';
+import 'package:fuel_route/Utils/animated_page_route.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/main.dart';
 import 'package:fuel_route/api_keys.dart';
@@ -666,22 +667,34 @@ class _AddNewTripState extends State<AddNewTrip> {
                   );
                   return;
                 }
-
-                Navigator.push(
+                navigateWithAnimation(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => CalculatorScreen(
-                      pickup: _pickupController.text,
-                      destination: _destinationController.text,
-                      userName: user.displayName ?? 'N/A',
-                      userEmail: user.email ?? 'N/A',
-                      pickupLat: origin!.latitude,
-                      pickupLng: origin!.longitude,
-                      destinationLat: destination!.latitude,
-                      destinationLng: destination!.longitude,
-                    ),
+                  CalculatorScreen(
+                    pickup: _pickupController.text,
+                    destination: _destinationController.text,
+                    userName: user.displayName ?? 'N/A',
+                    userEmail: user.email ?? 'N/A',
+                    pickupLat: origin!.latitude,
+                    pickupLng: origin!.longitude,
+                    destinationLat: destination!.latitude,
+                    destinationLng: destination!.longitude,
                   ),
                 );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (context) => CalculatorScreen(
+                //       pickup: _pickupController.text,
+                //       destination: _destinationController.text,
+                //       userName: user.displayName ?? 'N/A',
+                //       userEmail: user.email ?? 'N/A',
+                //       pickupLat: origin!.latitude,
+                //       pickupLng: origin!.longitude,
+                //       destinationLat: destination!.latitude,
+                //       destinationLng: destination!.longitude,
+                //     ),
+                //   ),
+                // );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(

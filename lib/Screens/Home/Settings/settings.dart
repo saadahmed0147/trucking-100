@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:fuel_route/Routes/route_names.dart';
+import 'package:fuel_route/Screens/Auth/login_screen.dart';
+import 'package:fuel_route/Utils/animated_page_route.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -49,7 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       // Update the user data in Firebase Realtime Database
       final dbRef = FirebaseDatabase.instance.ref('users/${user.uid}');
       await dbRef.update({
-        'name': nameController.text,
+        'na me': nameController.text,
         'email': emailController.text,
         'phone': phoneController.text,
       });
@@ -586,9 +587,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (confirm == true) {
                     await FirebaseAuth.instance.signOut();
                     if (mounted) {
-                      Navigator.of(
-                        context,
-                      ).pushReplacementNamed(RouteNames.loginScreen);
+                      navigateWithAnimation(context, LoginScreen());
                     }
                   }
                 },

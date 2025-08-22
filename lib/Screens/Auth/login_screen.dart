@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Component/round_textfield.dart';
-import 'package:fuel_route/Routes/route_names.dart';
+import 'package:fuel_route/Screens/Auth/forgot_pass_screen.dart';
+import 'package:fuel_route/Screens/Auth/signup_screen.dart';
 import 'package:fuel_route/Services/auth_services.dart';
+import 'package:fuel_route/Utils/animated_page_route.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/Utils/utils.dart';
 import 'package:fuel_route/main.dart';
@@ -152,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         overlayColor: Colors.transparent,
                       ),
                       onPressed: () {
-                        Navigator.pushNamed(context, RouteNames.signupScreen);
+                        navigateWithAnimation(context, const SignupScreen());
                       },
                       child: const Text(
                         'Sign Up',
@@ -213,9 +215,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           overlayColor: Colors.transparent,
                         ),
                         onPressed: () {
-                          Navigator.pushNamed(
+                          navigateWithAnimation(
                             context,
-                            RouteNames.forgotPassScreen,
+                            const ForgetPassScreen(),
                           );
                         },
                         child: const Text(

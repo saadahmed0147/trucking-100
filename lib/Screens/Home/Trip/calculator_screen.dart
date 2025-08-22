@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fuel_route/Screens/Home/home_screen.dart';
+import 'package:fuel_route/Utils/animated_page_route.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 import 'package:fuel_route/api_keys.dart';
 import 'package:http/http.dart' as http;
@@ -259,11 +260,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   height: 36,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushReplacement(
+                      navigateWithAnimation(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const HomeScreen(initialIndex: 1),
-                        ),
+                        const HomeScreen(initialIndex: 1),
                       );
                     },
                     style: ElevatedButton.styleFrom(

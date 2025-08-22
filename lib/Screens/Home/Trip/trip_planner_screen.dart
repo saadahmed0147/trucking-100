@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:fuel_route/Component/round_button.dart';
 import 'package:fuel_route/Screens/Home/Trip/add_new_trip.dart';
 import 'package:fuel_route/Screens/Home/Trip/map_screen.dart';
+import 'package:fuel_route/Utils/animated_page_route.dart';
 import 'package:fuel_route/Utils/app_colors.dart';
 
 class TripPlannerScreen extends StatefulWidget {
@@ -172,198 +173,560 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                         itemCount: trips.length,
                         itemBuilder: (context, index) {
                           final trip = trips[index];
-                          return InkWell(
+                          return GestureDetector(
                             onTap: () {
-                              Navigator.push(
+                              navigateWithAnimation(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => MapScreen(
-                                    pickup: trip['pickup'],
-                                    destination: trip['destination'],
-                                    pickupLat: trip['pickupLat'],
-                                    pickupLng: trip['pickupLng'],
-                                    destinationLat: trip['destinationLat'],
-                                    destinationLng: trip['destinationLng'],
-                                    tripId: trip['id'],
-                                  ),
+                                MapScreen(
+                                  pickup: trip['pickup'] ?? "Unknown Pickup",
+                                  destination:
+                                      trip['destination'] ??
+                                      "Unknown Destination",
+                                  pickupLat:
+                                      double.tryParse(
+                                        trip['pickupLat'].toString(),
+                                      ) ??
+                                      0.0,
+                                  pickupLng:
+                                      double.tryParse(
+                                        trip['pickupLng'].toString(),
+                                      ) ??
+                                      0.0,
+                                  destinationLat:
+                                      double.tryParse(
+                                        trip['destinationLat'].toString(),
+                                      ) ??
+                                      0.0,
+                                  destinationLng:
+                                      double.tryParse(
+                                        trip['destinationLng'].toString(),
+                                      ) ??
+                                      0.0,
+                                  tripId: trip['id'] ?? '',
                                 ),
                               );
+                              // Navigator.push(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //     builder: (context) => MapScreen(
+                              //       pickup: trip['pickup'] ?? "Unknown Pickup",
+                              //       destination:
+                              //           trip['destination'] ??
+                              //           "Unknown Destination",
+                              //       pickupLat:
+                              //           double.tryParse(
+                              //             trip['pickupLat'].toString(),
+                              //           ) ??
+                              //           0.0,
+                              //       pickupLng:
+                              //           double.tryParse(
+                              //             trip['pickupLng'].toString(),
+                              //           ) ??
+                              //           0.0,
+                              //       destinationLat:
+                              //           double.tryParse(
+                              //             trip['destinationLat'].toString(),
+                              //           ) ??
+                              //           0.0,
+                              //       destinationLng:
+                              //           double.tryParse(
+                              //             trip['destinationLng'].toString(),
+                              //           ) ??
+                              //           0.0,
+                              //       tripId: trip['id'] ?? '',
+                              //     ),
+                              //   ),
+                              // );
                             },
-                            borderRadius: BorderRadius.circular(18),
                             child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
+                              duration: const Duration(milliseconds: 300),
                               margin: const EdgeInsets.symmetric(
                                 vertical: 12,
-                                horizontal: 4,
+                                horizontal: 8,
                               ),
+                              padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(18),
-                                boxShadow: const [
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [Colors.white, Colors.blue.shade50],
+                                ),
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
                                   BoxShadow(
-                                    color: Colors.blueAccent,
-                                    blurRadius: 4,
-                                    offset: Offset(0, 2),
+                                    color: AppColors.lightBlueColor.withOpacity(
+                                      0.15,
+                                    ),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                    spreadRadius: 2,
+                                  ),
+                                  BoxShadow(
+                                    color: Colors.white.withOpacity(0.7),
+                                    blurRadius: 10,
+                                    offset: const Offset(-5, -5),
                                   ),
                                 ],
                                 border: Border.all(
-                                  width: 2,
-                                  color: AppColors.lightBlueColor,
+                                  color: AppColors.lightBlueColor.withOpacity(
+                                    1,
+                                  ),
+                                  width: 1,
                                 ),
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(30),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 5,
-                                           ),
-                                          child: const Icon(
-                                            Icons.location_on,
-                                            color: Colors.blueAccent,
-                                            size: 20,
+                              child: Column(
+                                children: [
+                                  // Header with trip status badge
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: trip['status'] == 'active'
+                                                ? [
+                                                    Colors.green.shade400,
+                                                    Colors.green.shade600,
+                                                  ]
+                                                : [
+                                                    Colors.orange.shade400,
+                                                    Colors.orange.shade600,
+                                                  ],
                                           ),
-                                        ),
-                                        const SizedBox(width: 15),
-                                        Expanded(
-                                          child: Text(
-                                            trip['pickup'] ?? 'Unknown',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                              color: AppColors.darkBlueColor,
-                                            ),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 18),
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.flag,
-                                          color: Colors.deepOrange,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 15),
-                                        Expanded(
-                                          child: Text(
-                                            trip['destination'] ?? 'Unknown',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                              color: AppColors.darkBlueColor,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  (trip['status'] == 'active'
+                                                          ? Colors.green
+                                                          : Colors.orange)
+                                                      .withOpacity(0.3),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 4),
                                             ),
-                                          ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                    // const SizedBox(height: 18),
-                                    // Row(
-                                    //   children: [
-                                    //     const Icon(
-                                    //       Icons.access_time,
-                                    //       color: Colors.black,
-                                    //       size: 18,
-                                    //     ),
-                                    //     const SizedBox(width: 15),
-                                    //     Expanded(
-                                    //       child: Text(
-                                    //         trip['duration'] ?? 'Unknown',
-                                    //         style: const TextStyle(
-                                    //           fontWeight: FontWeight.bold,
-                                    //           fontSize: 14,
-                                    //           color: AppColors.darkBlueColor,
-                                    //         ),
-                                    //       ),
-                                    //     ),
-                                    //   ],
-                                    // ),
-                                    const SizedBox(height: 30),
-                                    Divider(color: AppColors.darkBlueColor),
-                                    const SizedBox(height: 6),
-                                    Wrap(
-                                      spacing: 12,
-                                      runSpacing: 0,
-                                      children: [
-                                        if (trip['date'] != null)
-                                          Chip(
-                                            avatar: const Icon(
-                                              Icons.calendar_today,
-                                              size: 18,
-                                              color: Colors.white,
-                                            ),
-                                            label: Text(
-                                              'Starting Date: ${trip['date'].toString().substring(0, 10)}',
-                                              style: const TextStyle(
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: 8,
+                                              height: 8,
+                                              decoration: const BoxDecoration(
                                                 color: Colors.white,
+                                                shape: BoxShape.circle,
                                               ),
                                             ),
-                                            backgroundColor: Colors.blueAccent,
-                                          ),
-                                        if (trip['duration'] != null)
-                                          Chip(
-                                            avatar: const Icon(
-                                              Icons.access_time,
-                                              size: 18,
-                                              color: Colors.white,
-                                            ),
-                                            label: Text(
-                                              trip['duration'] ?? 'Unknown',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            backgroundColor: Colors.deepPurple,
-                                          ),
-                                        // if (trip['mpg'] != null)
-                                        //   Chip(
-                                        //     avatar: const Icon(
-                                        //       Icons.local_gas_station,
-                                        //       size: 18,
-                                        //       color: Colors.white,
-                                        //     ),
-                                        //     label: Text(
-                                        //       'MPG: ${trip['mpg']}',
-                                        //       style: const TextStyle(
-                                        //         color: Colors.white,
-                                        //       ),
-                                        //     ),
-                                        //     backgroundColor: Colors.green,
-                                        //   ),
-                                        if (trip['status'] != null)
-                                          Chip(
-                                            avatar: Icon(
-                                              trip['status'] == 'active'
-                                                  ? Icons.check_circle
-                                                  : Icons.history,
-                                              size: 18,
-                                              color: Colors.white,
-                                            ),
-                                            label: Text(
-                                              trip['status']
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              (trip['status'] ?? '')
                                                   .toString()
                                                   .toUpperCase(),
                                               style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                                color: Colors.white,
+                                                letterSpacing: 1,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.lightBlueColor
+                                              .withOpacity(0.3),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          Icons.arrow_forward_ios,
+                                          size: 16,
+                                          color: AppColors.lightBlueColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 20),
+
+                                  // Enhanced Pickup - Destination Section
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.8),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: Colors.blue.shade100,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Enhanced route indicator
+                                        Column(
+                                          children: [
+                                            Container(
+                                              width: 20,
+                                              height: 20,
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    Colors.blue.shade400,
+                                                    Colors.blue.shade600,
+                                                  ],
+                                                ),
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.blue
+                                                        .withOpacity(0.3),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: const Icon(
+                                                Icons.my_location,
+                                                size: 12,
                                                 color: Colors.white,
                                               ),
                                             ),
-                                            backgroundColor:
-                                                trip['status'] == 'active'
-                                                ? Colors.green
-                                                : Colors.grey,
+                                            Container(
+                                              width: 3,
+                                              height: 40,
+                                              margin:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 4,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.topCenter,
+                                                  end: Alignment.bottomCenter,
+                                                  colors: [
+                                                    Colors.blue.shade300,
+                                                    Colors.orange.shade300,
+                                                  ],
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(2),
+                                              ),
+                                            ),
+                                            Container(
+                                              width: 20,
+                                              height: 20,
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    Colors.orange.shade400,
+                                                    Colors.orange.shade600,
+                                                  ],
+                                                ),
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.orange
+                                                        .withOpacity(0.3),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: const Icon(
+                                                Icons.flag,
+                                                size: 12,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Pickup location
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 8,
+                                                    ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      "FROM",
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors
+                                                            .blue
+                                                            .shade600,
+                                                        letterSpacing: 1,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      trip['pickup'] ??
+                                                          "Unknown Pickup",
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 16,
+                                                        color: Colors.black87,
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+
+                                              Container(
+                                                height: 1,
+                                                color: Colors.grey.shade200,
+                                                margin:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 8,
+                                                    ),
+                                              ),
+
+                                              // Destination location
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 8,
+                                                    ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      "TO",
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors
+                                                            .orange
+                                                            .shade600,
+                                                        letterSpacing: 1,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      trip['destination'] ??
+                                                          "Unknown Destination",
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 16,
+                                                        color: Colors.black87,
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                           ),
+                                        ),
                                       ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+
+                                  const SizedBox(height: 16),
+
+                                  // Enhanced info section
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: Colors.grey.shade200,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Date Row
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: Colors.blue.shade100,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Icon(
+                                                Icons.calendar_today,
+                                                size: 20,
+                                                color: Colors.blue.shade600,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "Date",
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    trip['date']?.substring(
+                                                          0,
+                                                          10,
+                                                        ) ??
+                                                        'N/A',
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.black87,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        const Divider(height: 24),
+
+                                        // Duration Row
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: Colors.purple.shade100,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Icon(
+                                                Icons.access_time,
+                                                size: 20,
+                                                color: Colors.purple.shade600,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "Duration",
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    trip['duration'] ?? 'N/A',
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.black87,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        const Divider(height: 24),
+
+                                        // Distance Row
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: Colors.green.shade100,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Icon(
+                                                Icons.route,
+                                                size: 20,
+                                                color: Colors.green.shade600,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "Distance",
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    trip['distanceMiles'] !=
+                                                            null
+                                                        ? "${double.tryParse(trip['distanceMiles'].toString())?.toStringAsFixed(2)} mi"
+                                                        : 'N/A',
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.black87,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -378,7 +741,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
         },
       ),
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(30),
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
         child: RoundButton(
           leadingIcon: Icons.add,
           leadingIconColor: AppColors.whiteColor,
@@ -454,10 +817,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
               return;
             }
 
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddNewTrip()),
-            );
+            navigateWithAnimation(context, const AddNewTrip());
           },
         ),
       ),
